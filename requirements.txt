@@ -1,0 +1,11 @@
+polars
+pyarrow
+fastapi
+uvicorn
+sentence-transformers
+faiss-cpu
+httpx
+pydantic
+python-dotenv
+tqdm
+jinja2

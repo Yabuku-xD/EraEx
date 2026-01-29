@@ -1,0 +1,27 @@
+from config.settings import (
+    BASE_DIR,
+    DATA_DIR,
+    RAW_DIR,
+    PROCESSED_DIR,
+    EMBEDDINGS_DIR,
+    INDEXES_DIR,
+    EMBEDDING_MODEL,
+    EMBEDDING_DIM,
+    YEAR_RANGE,
+    BLOCK_GENRES,
+    MAX_DESC_LENGTH,
+)
+
+__all__ = [
+    "BASE_DIR",
+    "DATA_DIR",
+    "RAW_DIR",
+    "PROCESSED_DIR",
+    "EMBEDDINGS_DIR",
+    "INDEXES_DIR",
+    "EMBEDDING_MODEL",
+    "EMBEDDING_DIM",
+    "YEAR_RANGE",
+    "BLOCK_GENRES",
+    "MAX_DESC_LENGTH",
+]

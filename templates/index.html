@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERAEX - The Golden Era (2013-2018)</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@400;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="chat-layout">
+        <div class="header-center">
+            <h1>ERAEX</h1>
+            <p class="subtitle">THE GOLDEN ERA (2013-2018)</p>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="welcome-section" id="welcomeMsg">
+                <h2>Welcome to EraEx.</h2>
+                <h3 style="color: #666; font-weight: 400; margin-top: 0.5rem;">Say what you feel. Get what you deserve.
+                </h3>
+            </div>
+
+            <div class="search-container">
+                <div class="input-wrapper">
+                    <label>YOUR QUERY</label>
+                    <input type="text" id="queryInput" placeholder="e.g. partynextdoor vibes">
+                </div>
+                <button id="searchBtn" onclick="runSearch()">SEARCH</button>
+            </div>
+
+            <div class="settings-row">
+                <div class="setting-item">
+                    <label>TIMELINE <span id="yearLabel">(2013-2018)</span></label>
+                    <div class="mini-range">
+                        <input type="range" id="startYear" min="2013" max="2018" value="2013" oninput="updateYears()">
+                        <input type="range" id="endYear" min="2013" max="2018" value="2018" oninput="updateYears()">
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>DEPTH</label>
+                    <input type="number" id="topK" value="10" min="1" max="50">
+                    <p class="setting-desc">Number of artifacts to unearth.</p>
+                </div>
+                <div class="setting-item lucky-item">
+                    <button id="luckyBtn" onclick="feelingLucky()">🎲 FEELING LUCKY?</button>
+                    <p class="setting-desc">Based on your vibe history.</p>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="results-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateYears() {
+            let s = document.getElementById('startYear').value;
+            let e = document.getElementById('endYear').value;
+            if (parseInt(s) > parseInt(e)) {
+                let temp = s; s = e; e = temp;
+            }
+            document.getElementById('yearLabel').innerText = `(${s}-${e})`;
+        }
+
+        function getQueryHistory() {
+            try {
+                const history = localStorage.getItem('eraex_query_history');
+                return history ? JSON.parse(history) : [];
+            } catch (e) { return []; }
+        }
+
+        function saveQueryHistory(query) {
+            try {
+                let history = getQueryHistory();
+                if (query && query.trim().length > 2) {
+                    history = history.filter(q => q !== query);
+                    history.unshift(query);
+                    history = history.slice(0, 20);
+                    localStorage.setItem('eraex_query_history', JSON.stringify(history));
+                }
+            } catch (e) { console.error("Save history failed", e); }
+        }
+
+        async function feelingLucky() {
+            const btn = document.getElementById('luckyBtn');
+            const container = document.getElementById('resultsContainer');
+            const history = getQueryHistory();
+
+            btn.innerText = "🎲 ROLLING...";
+            document.getElementById('welcomeMsg').style.display = 'none';
+            container.innerHTML = `<div class="loader">Channeling your past vibes...</div>`;
+
+            try {
+                const res = await fetch('/lucky', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history: history })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    container.innerHTML = `<div class="error">${data.error}</div>`;
+                    btn.innerText = "🎲 FEELING LUCKY?";
+                    return;
+                }
+
+                const dataResults = data.results || [];
+
+                if (dataResults.length === 0) {
+                    container.innerHTML = `<div class="error">No vibes detected. Search something first!</div>`;
+                    btn.innerText = "🎲 FEELING LUCKY?";
+                    return;
+                }
+
+                const trackPayload = dataResults.map(r => ({
+                    url: r.permalink_url,
+                    artist: r.artist,
+                    title: r.title
+                }));
+
+                const checkRes = await fetch('/check_links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls: trackPayload })
+                });
+
+                const checkData = await checkRes.json();
+                const resultMap = checkData.results || {};
+
+                renderResults(dataResults, resultMap, true);
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="error">System Failure: ${err.message}</div>`;
+            } finally {
+                btn.innerText = "🎲 FEELING LUCKY?";
+            }
+        }
+
+        async function runSearch() {
+            const btn = document.getElementById('searchBtn');
+            const container = document.getElementById('resultsContainer');
+            const query = document.getElementById('queryInput').value;
+            let s = document.getElementById('startYear').value;
+            let e = document.getElementById('endYear').value;
+            if (parseInt(s) > parseInt(e)) { let temp = s; s = e; e = temp; }
+            const topK = document.getElementById('topK').value;
+
+            btn.innerText = "SCANNING...";
+            document.getElementById('welcomeMsg').style.display = 'none';
+            container.innerHTML = `<div class="loader">Scanning metadata...</div>`;
+
+            try {
+                const res = await fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        year_start: parseInt(s),
+                        year_end: parseInt(e),
+                        top_k: parseInt(topK)
+                    })
+                });
+
+                const contentType = res.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await res.text();
+                    console.error('Non-JSON response:', text);
+                    container.innerHTML = `<div class="error">Server returned an error. Please try again.</div>`;
+                    btn.innerText = "SEARCH";
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (data.error) {
+                    if (data.retry) {
+                        container.innerHTML = `<div class="error">⏳ ${data.error}<br><small>The system is still loading.</small></div>`;
+                    } else {
+                        container.innerHTML = `<div class="error">SERVER ERROR: ${data.error}</div>`;
+                    }
+                    btn.innerText = "SEARCH";
+                    document.getElementById('welcomeMsg').style.display = 'block';
+                    return;
+                }
+
+                const dataResults = data.results || [];
+
+                if (dataResults.length === 0) {
+                    container.innerHTML = `<div class="error">No signals found.</div>`;
+                    btn.innerText = "SEARCH";
+                    return;
+                }
+
+                saveQueryHistory(query);
+
+                const trackPayload = dataResults.map(r => ({
+                    url: r.permalink_url,
+                    artist: r.artist,
+                    title: r.title
+                }));
+
+                const checkRes = await fetch('/check_links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls: trackPayload })
+                });
+
+                const checkContentType = checkRes.headers.get('content-type');
+                if (!checkContentType || !checkContentType.includes('application/json')) {
+                    renderResults(dataResults, {});
+                    saveState(dataResults, {});
+                    btn.innerText = "SEARCH";
+                    return;
+                }
+
+                const checkData = await checkRes.json();
+                const resultMap = checkData.results || {};
+
+                renderResults(dataResults, resultMap);
+                saveState(dataResults, resultMap);
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="error">System Failure: ${err.message}</div>`;
+            } finally {
+                btn.innerText = "SEARCH";
+            }
+        }
+
+        function saveState(dataResults, resultMap) {
+            try {
+                const state = {
+                    results: dataResults,
+                    map: resultMap,
+                    timestamp: new Date().getTime()
+                };
+                localStorage.setItem('eraex_last_search', JSON.stringify(state));
+            } catch (e) { console.error("Save failed", e); }
+        }
+
+        function restoreState() {
+            try {
+                const saved = localStorage.getItem('eraex_last_search');
+                if (!saved) return;
+
+                const state = JSON.parse(saved);
+                if (state.results && state.results.length > 0) {
+                    renderResults(state.results, state.map || {});
+                }
+            } catch (e) { console.error("Restore failed", e); }
+        }
+
+        function renderResults(dataResults, resultMap, isLucky = false) {
+            const container = document.getElementById('resultsContainer');
+            const headerText = isLucky ? `🎲 ${dataResults.length} LUCKY PICKS` : `RESTORED ${dataResults.length} ARTIFACTS`;
+            container.innerHTML = `<div class="count-header">${headerText}</div>`;
+
+            const DEAD_MSGS = [
+                "Signal lost in transmission.",
+                "Original artifact purged.",
+                "404: Vibe Decay detected.",
+                "The artist ghosted this timeline."
+            ];
+
+            dataResults.forEach(track => {
+                const statusObj = resultMap[track.permalink_url] || { status: "dead" };
+                const isAlive = statusObj.status === "alive";
+                const isHealed = statusObj.status === "healed";
+                const isReplaced = statusObj.status === "replaced";
+
+                let displayTitle = track.title;
+                let displayYear = track.year || "????";
+                let finalUrl = track.permalink_url;
+
+                if (isHealed) {
+                    finalUrl = statusObj.new_url;
+                } else if (isReplaced) {
+                    finalUrl = statusObj.new_url;
+                    if (statusObj.new_track) {
+                        displayTitle = statusObj.new_track.title;
+                        displayYear = statusObj.new_track.year;
+                    }
+                }
+
+                const ytQuery = `${displayTitle}`.replace(/ /g, "+");
+
+                let content = "";
+
+                if (isAlive || isHealed || isReplaced) {
+                    content = `
+                    <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=${finalUrl}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true">
+                    </iframe>
+                    <div class="actions">
+                        <a href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank" class="yt-btn">Find on YouTube ↗</a>
+                    </div>
+                    `;
+                } else {
+                    const msg = DEAD_MSGS[Math.floor(Math.random() * DEAD_MSGS.length)];
+                    content = `
+                    <div class="dead-link-box">
+                        <div class="skull">💀</div>
+                        <div class="msg">${msg}</div>
+                        <div style="font-size: 0.8em; color: #555; margin-bottom: 1rem;">Could not find a valid replacement.</div>
+                        <a href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank" class="yt-btn">Find on YouTube ↗</a>
+                    </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <div class="track-header">
+                        <div>
+                            <div class="track-title">${displayTitle}</div>
+                            <div class="track-artist">${displayYear}</div>
+                        </div>
+                    </div>
+                    ${content}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.addEventListener('load', restoreState);
+    </script>
+</body>
+
+</html>
