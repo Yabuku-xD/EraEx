@@ -19,11 +19,6 @@ wheels/
 .installed.cfg
 *.egg
 
-.env
-.venv
-env/
-venv/
-ENV/
 
 .vscode/
 .idea/
@@ -35,5 +30,3 @@ ENV/
 *.tmp
 .DS_Store
 Thumbs.db
-
-.gemini/
