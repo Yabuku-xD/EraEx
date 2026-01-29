@@ -13,40 +13,7 @@ Mood-based music discovery for SoundCloud tracks from the golden era of SoundClo
 
 ## Architecture
 
-```
-capstone/
-├── api/                    # FastAPI application
-│   └── main.py             # API endpoints
-├── config/                 # Configuration
-│   └── settings.py         # Environment and paths
-├── data/                   # Data storage
-│   ├── raw/                # Original CSV files
-│   ├── processed/          # Parquet partitions
-│   ├── embeddings/         # SBERT vectors
-│   └── indexes/            # FAISS indexes
-├── filter_type/            # Content filtering
-│   └── filters.py          # DJ mix, podcast removal
-├── index/                  # Vector indexing
-│   └── faiss_index.py      # FAISS IVF+PQ index
-├── ingest/                 # Data ingestion
-│   ├── schema.py           # Column definitions
-│   └── writer.py           # CSV to Parquet
-├── linkcheck/              # Link verification
-│   └── checker.py          # SoundCloud alive/heal
-├── prep/                   # Preprocessing
-│   └── preprocess.py       # Dedup, text cleaning
-├── search/                 # Search engine
-│   ├── hybrid.py           # Artist + semantic search
-│   └── reranker.py         # Cross-encoder & popularity
-├── static/                 # CSS assets
-├── templates/              # HTML templates
-├── run_api.py              # Start API server
-├── run_embed.py            # Generate embeddings
-├── run_filter.py           # Filter content types
-├── run_index.py            # Build FAISS indexes
-├── run_ingest.py           # Ingest CSV data
-└── run_tags.py             # Build tag matrix
-```
+![image](1.png)
 
 ## Advanced Ranking Pipeline
 
