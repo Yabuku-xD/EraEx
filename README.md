@@ -11,10 +11,6 @@ Mood-based music discovery for SoundCloud tracks from the golden era of SoundClo
 - **Year Filtering**: Filter results by release year (2013-2018)
 - **SoundCloud Widget**: Inline playback using SoundCloud's embed player
 
-## Architecture
-
-![image](1.png)
-
 ## Advanced Ranking Pipeline
 
 The search engine uses a sophisticated 4-stage pipeline:
