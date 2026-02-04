@@ -9,3 +9,5 @@ pydantic
 python-dotenv
 tqdm
 jinja2
+redis
+nrclex

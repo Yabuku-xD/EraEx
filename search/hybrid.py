@@ -5,6 +5,8 @@ from sentence_transformers import SentenceTransformer
 
 from config.settings import EMBEDDINGS_DIR, INDEXES_DIR, PROCESSED_DIR, EMBEDDING_MODEL, YEAR_RANGE
 from index.faiss_index import load_index, search_index
+from search.mood_lexicon import expand_mood_query
+from search.cache import embedding_cache
 
 
 class MusicSearcher:
@@ -41,10 +43,22 @@ class MusicSearcher:
         
         self._loaded = True
         print(f"Loaded {len(self.indexes)} year indexes")
+        print(f"Cache status: {embedding_cache.stats()}")
     
     def embed_query(self, query: str) -> np.ndarray:
+        # Check cache first
+        cached = embedding_cache.get(query)
+        if cached is not None:
+            return cached
+        
+        # Compute embedding
         embedding = self.model.encode(query, normalize_embeddings=True)
-        return embedding.astype(np.float32)
+        embedding = embedding.astype(np.float32)
+        
+        # Cache for future use
+        embedding_cache.set(query, embedding)
+        
+        return embedding
     
     def search_by_artist(self, artist_query: str, years: list, k: int = 100) -> list:
         artist_lower = artist_query.lower().strip()
@@ -117,7 +131,9 @@ class MusicSearcher:
         if len(artist_results) >= k:
             return artist_results[:k]
         
-        query_embedding = self.embed_query(query)
+        # Expand mood keywords before embedding for better semantic matching
+        expanded_query = expand_mood_query(query)
+        query_embedding = self.embed_query(expanded_query)
         
         all_results = []
         for year in years:
@@ -167,6 +183,5 @@ class MusicSearcher:
             enriched.append(r)
         
         return enriched
-
 
 searcher = MusicSearcher()

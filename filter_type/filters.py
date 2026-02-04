@@ -1,8 +1,16 @@
 import re
 import polars as pl
 
+# Block genres that are not music tracks
+# Source: SoundCloud Content Categories
+# Reference: https://developers.soundcloud.com/docs/api/reference#tracks
 BLOCK_GENRES = {"sports", "spoken words", "spoken word"}
 
+# Patterns to exclude non-music content (DJ sets, podcasts, interviews, etc.)
+# Sources:
+# - Wikipedia: Podcast naming conventions
+#   https://en.wikipedia.org/wiki/Podcast
+# - Common DJ mix and radio show naming patterns
 EXCLUDE_PATTERNS = {
     "mix": r"\b(dj\s*mix|mixtape|mix\s*tape|megamix|minimix|set\s*mix)\b",
     "ep_episode": r"\b(ep|episode)\s*[\.:#-]?\s*\d+",
@@ -16,6 +24,9 @@ EXCLUDE_PATTERNS = {
     "continuous": r"\bcontinuous\s*mix\b",
 }
 
+# Music indicator keywords for track classification
+# Source: Music terminology glossary
+# Reference: https://en.wikipedia.org/wiki/Glossary_of_music_terminology
 MUSIC_INDICATORS = {
     "remix": r"\bremix\b",
     "cover": r"\bcover\b",
@@ -31,6 +42,12 @@ MUSIC_INDICATORS = {
     "song": r"\bsong\b",
 }
 
+# Music genre taxonomy for classification
+# Sources:
+# - Wikipedia: List of music genres and styles
+#   https://en.wikipedia.org/wiki/List_of_music_genres_and_styles
+# - Every Noise at Once: https://everynoise.com/
+# - SoundCloud genre categories
 MUSIC_GENRES = {
     "electronic", "hip hop rap", "house", "techno", "dubstep", "drum bass",
     "ambient", "trance", "r&b soul", "pop", "rock", "metal", "jazz", "blues",
