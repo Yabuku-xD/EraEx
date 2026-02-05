@@ -23,6 +23,11 @@ MyDrive/EraEx/
 
 ## Step 2: Run Colab Notebooks (In Order)
 
+> **IMPORTANT**: 
+> - **Do NOT download** the intermediate `ndjson_converted.csv` file. It is very large (30GB+) and attempting to download it may cause browser crashes or "disappearing file" errors due to Google Drive sync latency.
+> - Just run the notebooks in order. Notebook 00 reads the file directly from Drive.
+> - If you don't see the file immediately in Drive UI, **wait 5 minutes** for the sync to catch up.
+
 | # | Notebook | Purpose | Runtime |
 |---|----------|---------|---------|
 | 1 | `01_ingest_ndjson.ipynb` | NDJSON → CSV | 1 hr / CPU |

@@ -1,14 +1,16 @@
 """
-Query Intent Classifier - Automated using NRCLex
+Query Intent Classifier - Automated using NRCLex + WordNet
 
 Uses NRC Emotion Lexicon to detect if query is mood-based.
+Uses WordNet to detect if query is genre-based.
+NO manual keyword sets.
 
 Sources:
 - NRC Emotion Lexicon (EmoLex) by Dr. Saif Mohammad
-  https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm
+- NLTK WordNet
 """
 
-from typing import Literal
+from typing import Literal, Set
 import re
 
 try:
@@ -17,15 +19,20 @@ try:
 except ImportError:
     NRCLEX_AVAILABLE = False
 
-QueryIntent = Literal["mood", "artist", "genre", "mixed"]
+try:
+    from nltk.corpus import wordnet as wn
+    import nltk
+    try:
+        wn.synsets('test')
+        WORDNET_AVAILABLE = True
+    except LookupError:
+        nltk.download('wordnet', quiet=True)
+        nltk.download('omw-1.4', quiet=True)
+        WORDNET_AVAILABLE = True
+except ImportError:
+    WORDNET_AVAILABLE = False
 
-GENRE_INDICATORS = {
-    "hip hop", "hip-hop", "rap", "r&b", "rnb", "electronic", "edm",
-    "house", "techno", "dubstep", "trap", "lo-fi", "lofi", "ambient",
-    "rock", "metal", "indie", "pop", "jazz", "soul", "funk",
-    "reggae", "classical", "country", "folk", "blues", "drill",
-    "phonk", "grunge", "punk", "disco", "trance", "dnb", "drum and bass"
-}
+QueryIntent = Literal["mood", "artist", "genre", "mixed"]
 
 ARTIST_PATTERNS = [
     r"^[A-Z][a-z]+\s+[A-Z][a-z]+$",
@@ -37,7 +44,24 @@ ARTIST_PATTERNS = [
 class MoodClassifier:
     def __init__(self):
         self._compiled_artist_patterns = [re.compile(p, re.IGNORECASE) for p in ARTIST_PATTERNS]
+        self.genres: Set[str] = self._load_genres()
     
+    def _load_genres(self) -> Set[str]:
+        if not WORDNET_AVAILABLE:
+            return set()
+        
+        genres = set()
+        try:
+            # Load genres dynamically from WordNet 'musical_style'
+            base = wn.synset('musical_style.n.01')
+            for syn in base.closure(lambda s: s.hyponyms()):
+                for lemma in syn.lemmas():
+                    name = lemma.name().replace('_', ' ').lower()
+                    genres.add(name)
+        except Exception:
+            pass
+        return genres
+
     def _has_emotions(self, text: str) -> bool:
         if not NRCLEX_AVAILABLE:
             return False
@@ -61,8 +85,14 @@ class MoodClassifier:
             return 0.0
     
     def _has_genre(self, text: str) -> bool:
+        if not self.genres:
+            return False
+            
         text_lower = text.lower()
-        return any(g in text_lower for g in GENRE_INDICATORS)
+        # Check if any genre is in text (word boundary check would be better but simple substring matches previous logic)
+        # Optimization: split text and check intersection if genres are single words, but genres can be multi-word
+        # Simple iteration is safest for now
+        return any(g in text_lower for g in self.genres)
     
     def _looks_like_artist(self, text: str) -> bool:
         for p in self._compiled_artist_patterns:
