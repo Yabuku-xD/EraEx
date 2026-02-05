@@ -22,3 +22,6 @@ YEAR_RANGE = range(2012, 2019)
 BLOCK_GENRES = {"sports", "spoken words", "spoken word"}
 
 MAX_DESC_LENGTH = 400
+
+MMR_LAMBDA = 0.7
+BM25_INDEX_PATH = INDEXES_DIR / "bm25_index.pkl"

@@ -1,24 +1,45 @@
-# ERAEX - The Golden Era (2013-2018)
+# ERAEX - The Golden Era (2012-2018)
 
-Mood-based music discovery for SoundCloud tracks from the golden era of SoundCloud (2013-2018). Search by mood, vibe, or artist name to discover hidden gems from 14+ million curated tracks.
+Mood-based music discovery for SoundCloud tracks from the golden era of SoundCloud (2012-2018). Search by mood, vibe, or artist name to discover hidden gems from 14+ million curated tracks.
 
 ## Features
 
-- **Semantic Search**: Find tracks by mood/vibe using SBERT embeddings
+- **Semantic Search**: Find tracks by mood/vibe using ColBERT embeddings
 - **Advanced Ranking**: Hybrid pipeline with cross-encoder re-ranking and popularity weighting
 - **Dead Link Healing**: Automatically finds working alternatives for removed tracks
 - **Feeling Lucky**: Personalized recommendations based on your search history
-- **Year Filtering**: Filter results by release year (2013-2018)
+- **Year Filtering**: Filter results by release year (2012-2018)
 - **SoundCloud Widget**: Inline playback using SoundCloud's embed player
 
 ## Advanced Ranking Pipeline
 
-The search engine uses a sophisticated 4-stage pipeline:
+The search engine uses a sophisticated **6-stage hybrid pipeline**:
 
-1. **Retrieval**: FAISS (IVF+PQ) finds top 200 candidates using SBERT bi-encoder.
-2. **Tag Expansion**: Expands query with co-occurring tags (e.g., "chill" → "lo-fi, ambient") using a pre-computed matrix.
-3. **Scoring**: Blends semantic similarity with popularity (log-normalized playback count).
-4. **Re-ranking**: Top candidates are re-scored using a Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) for high-precision ordering.
+```
+Query → Intent Classifier → Query Expansion
+               ↓
+     ┌─────────┴─────────┐
+     ↓                   ↓
+   FAISS              BM25
+  (Dense)           (Sparse)
+     ↓                   ↓
+     └─────────┬─────────┘
+               ↓
+    Reciprocal Rank Fusion (RRF)
+               ↓
+    Cross-Encoder Re-ranking
+               ↓
+    MMR Diversity Filter
+               ↓
+        Final Results
+```
+
+1. **Intent Classification**: Detects query type (mood/artist/genre) using rule-based classifier with pre-computed mood templates.
+2. **Query Expansion**: NRC Emotion Lexicon maps detected emotions to music descriptors (e.g., "i miss my ex" → "heartbreak emotional sad r&b").
+3. **Hybrid Retrieval**: FAISS (dense vectors) + BM25 (sparse keywords) run in parallel.
+4. **Reciprocal Rank Fusion**: Merges dense and sparse results using RRF scoring.
+5. **Cross-Encoder Re-ranking**: Top 30 candidates re-scored using `ms-marco-TinyBERT-L-2-v2` (optimized for CPU).
+6. **MMR Diversity**: Maximal Marginal Relevance ensures varied genres/artists in final results.
 
 ## Quick Start
 
@@ -72,15 +93,15 @@ Open http://localhost:8000 in your browser.
 }
 ```
 
-## Data Pipeline
+## Data Pipeline (via Colab)
 
-| Step | Command | Description |
-|------|---------|-------------|
-| 1. Ingest | `python run_ingest.py` | CSV → Parquet by year |
-| 2. Filter | `python run_filter.py` | Remove DJ mixes, podcasts |
-| 3. Prep | `python run_prep.py` | Dedup + build doc_text |
-| 4. Embed | `python run_embed.py` | SBERT vectors (GPU/Colab) |
-| 5. Index | `python run_index.py` | Build FAISS IVF+PQ |
+| Step | Notebook | Description |
+|------|----------|-------------|
+| 0 | `00_ingest_csv.ipynb` | CSV → Parquet |
+| 1 | `01_ingest_ndjson.ipynb` | NDJSON → Parquet |
+| 2 | `02_filter_and_prep.ipynb` | Filter + dedupe + doc_text |
+| 3 | `03_embed_colbert.ipynb` | Dense embeddings (GPU) |
+| 4 | `04_build_indexes.ipynb` | FAISS + BM25 indexes |
 
 ## Stats
 
@@ -88,14 +109,15 @@ Open http://localhost:8000 in your browser.
 |--------|-------|
 | Total Tracks | 14,033,412 |
 | Years | 2012-2018 |
-| Embedding Model | all-MiniLM-L6-v2 |
-| Embedding Dim | 384 |
-| Index Type | IVF+PQ |
+| Embedding Model | colbert-ir/colbertv2.0 |
+| Embedding Dim | 128 |
+| Index Type | FAISS IVF+PQ + BM25 Hybrid |
 
 ## Tech Stack
 
 - **Backend**: FastAPI, Uvicorn
-- **Search**: FAISS, Sentence-Transformers
+- **Search**: FAISS, BM25, ColBERT
+- **Ranking**: Cross-Encoder, MMR, Reciprocal Rank Fusion
 - **Data**: Polars, PyArrow
 - **Link Check**: httpx, SoundCloud API v2
 - **Frontend**: Jinja2, Vanilla JS/CSS

@@ -54,7 +54,9 @@ def save_index(index: faiss.Index, path: Path):
     print(f"  Saved index: {path}")
 
 
-def load_index(path: Path) -> faiss.Index:
+def load_index(path: Path, mmap: bool = True) -> faiss.Index:
+    if mmap:
+        return faiss.read_index(str(path), faiss.IO_FLAG_MMAP)
     return faiss.read_index(str(path))
 
 

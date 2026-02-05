@@ -1,85 +1,43 @@
 """
-NRC Emotion Lexicon Integration for EraEx Search
+NRC Emotion Lexicon Integration - Fully Automated
 
-Uses the NRCLex library to detect emotions in queries and expand
-them with music-relevant descriptors.
+Uses NRCLex library (14,000+ word lexicon) for emotion detection.
+Uses NLTK WordNet for synonym expansion.
 
-NRC Emotion Lexicon (EmoLex):
-- 8 emotions: anger, fear, anticipation, trust, surprise, sadness, joy, disgust
-- 2 sentiments: positive, negative
-- Source: Dr. Saif Mohammad, National Research Council Canada
-- https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm
-
-Requirements:
-    pip install nrclex
+Sources:
+- NRC Emotion Lexicon (EmoLex) by Dr. Saif Mohammad
+  https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm
+  
+- NLTK WordNet
+  https://wordnet.princeton.edu/
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
+import re
 
-# Try to import NRCLex, provide fallback if not installed
 try:
     from nrclex import NRCLex
     NRCLEX_AVAILABLE = True
 except ImportError:
     NRCLEX_AVAILABLE = False
-    print("⚠ NRCLex not installed. Run: pip install nrclex")
 
-
-# NRC Emotion -> Music descriptor mappings
-# Maps the 8 NRC emotions + 2 sentiments to music-relevant search terms
-EMOTION_TO_MUSIC = {
-    # Primary NRC Emotions
-    "anger": ["aggressive", "heavy", "intense", "hard", "metal", "rage"],
-    "fear": ["dark", "eerie", "atmospheric", "haunting", "tense"],
-    "anticipation": ["building", "epic", "progressive", "dynamic"],
-    "trust": ["warm", "comforting", "acoustic", "folk", "gentle"],
-    "surprise": ["experimental", "unexpected", "avant-garde", "eclectic"],
-    "sadness": ["melancholy", "emotional", "heartbreak", "slow", "crying", "sad r&b"],
-    "joy": ["upbeat", "happy", "dance", "feel good", "party", "energetic"],
-    "disgust": ["dark", "industrial", "gritty", "harsh"],
-    
-    # NRC Sentiments
-    "positive": ["uplifting", "happy", "bright", "feel good"],
-    "negative": ["dark", "sad", "melancholy", "moody"],
-}
-
-# Additional context-based expansions for common mood phrases
-CONTEXT_EXPANSIONS = {
-    # Relationship contexts
-    "ex": ["heartbreak", "breakup", "sad r&b", "emotional"],
-    "girlfriend": ["love", "romantic", "r&b", "slow jam"],
-    "boyfriend": ["love", "romantic", "r&b", "slow jam"],
-    "breakup": ["sad", "heartbreak", "crying", "emotional"],
-    "love": ["romantic", "r&b", "slow", "passionate"],
-    
-    # Activity contexts
-    "party": ["dance", "edm", "hype", "club", "bass"],
-    "study": ["lo-fi", "instrumental", "focus", "ambient"],
-    "workout": ["energetic", "hype", "motivation", "bass"],
-    "sleep": ["ambient", "calm", "peaceful", "soft"],
-    "driving": ["road trip", "cruising", "night drive"],
-    
-    # Time contexts
-    "night": ["late night", "nocturnal", "ambient", "moody"],
-    "morning": ["calm", "peaceful", "uplifting", "fresh"],
-    "summer": ["beach", "tropical", "feel good", "dance"],
-    
-    # Mood descriptors that need expansion
-    "nostalgic": ["throwback", "memories", "old school", "vintage", "retro"],
-    "chill": ["lo-fi", "ambient", "relaxed", "mellow"],
-    "vibes": [],  # Just a suffix, no expansion
-}
+try:
+    from nltk.corpus import wordnet as wn
+    import nltk
+    try:
+        wn.synsets('test')
+        WORDNET_AVAILABLE = True
+    except LookupError:
+        nltk.download('wordnet', quiet=True)
+        nltk.download('omw-1.4', quiet=True)
+        WORDNET_AVAILABLE = True
+except ImportError:
+    WORDNET_AVAILABLE = False
 
 
 def analyze_emotions(text: str) -> Dict[str, float]:
-    """
-    Analyze text using NRC Emotion Lexicon.
-    
-    Returns dict of emotion -> score (frequency).
-    """
     if not NRCLEX_AVAILABLE:
         return {}
-    
     try:
         emotion = NRCLex(text)
         return emotion.affect_frequencies
@@ -87,69 +45,70 @@ def analyze_emotions(text: str) -> Dict[str, float]:
         return {}
 
 
+def get_raw_emotions(text: str) -> Dict[str, int]:
+    if not NRCLEX_AVAILABLE:
+        return {}
+    try:
+        emotion = NRCLex(text)
+        return emotion.raw_emotion_scores
+    except Exception:
+        return {}
+
+
+def get_affect_words(text: str) -> List[str]:
+    if not NRCLEX_AVAILABLE:
+        return []
+    try:
+        emotion = NRCLex(text)
+        return list(emotion.affect_dict.keys())
+    except Exception:
+        return []
+
+
 def get_top_emotions(text: str, threshold: float = 0.1, max_emotions: int = 3) -> List[str]:
-    """
-    Get top detected emotions from text.
-    
-    Args:
-        text: Input text to analyze
-        threshold: Minimum score to include emotion
-        max_emotions: Maximum number of emotions to return
-    
-    Returns:
-        List of emotion names (e.g., ["sadness", "fear"])
-    """
     emotions = analyze_emotions(text)
-    
-    # Filter by threshold and sort by score
     filtered = [(e, s) for e, s in emotions.items() if s >= threshold]
     filtered.sort(key=lambda x: x[1], reverse=True)
-    
     return [e for e, s in filtered[:max_emotions]]
 
 
-def expand_mood_query(query: str, max_expansions: int = 6) -> str:
-    """
-    Expand query using NRC Emotion Lexicon + context mappings.
-    
-    This function:
-    1. Detects emotions in the query using NRCLex
-    2. Maps detected emotions to music descriptors
-    3. Adds context-based expansions for keywords like "ex", "party", etc.
-    
-    Args:
-        query: Original user query
-        max_expansions: Maximum descriptor words to add
-        
-    Returns:
-        Expanded query with music descriptors
-        
-    Example:
-        Input:  "I'm feeling nostalgic cause my ex girlfriend is back"
-        NRC:    Detects "sadness", "anticipation"
-        Output: "I'm feeling nostalgic cause my ex girlfriend is back 
-                 melancholy emotional heartbreak throwback memories"
-    """
-    query_lower = query.lower()
+def get_synonyms(word: str, max_synonyms: int = 5) -> List[str]:
+    if not WORDNET_AVAILABLE:
+        return []
+    synonyms = set()
+    for syn in wn.synsets(word):
+        for lemma in syn.lemmas():
+            name = lemma.name().replace('_', ' ')
+            if name.lower() != word.lower():
+                synonyms.add(name.lower())
+            if len(synonyms) >= max_synonyms:
+                return list(synonyms)
+    return list(synonyms)
+
+
+def expand_mood_query(query: str, max_expansions: int = 10) -> str:
     expansions = []
     
-    # 1. NRC Emotion-based expansion
-    top_emotions = get_top_emotions(query)
-    for emotion in top_emotions:
-        if emotion in EMOTION_TO_MUSIC:
-            # Add top 2 descriptors per emotion
-            for desc in EMOTION_TO_MUSIC[emotion][:2]:
-                if desc not in query_lower and desc not in expansions:
-                    expansions.append(desc)
+    emotions = get_raw_emotions(query)
+    if emotions:
+        top_emotions = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:3]
+        for emotion, score in top_emotions:
+            if score > 0:
+                expansions.append(emotion)
     
-    # 2. Context-based expansion (for keywords not caught by NRC)
-    for keyword, descriptors in CONTEXT_EXPANSIONS.items():
-        if keyword in query_lower and descriptors:
-            for desc in descriptors[:2]:
-                if desc not in query_lower and desc not in expansions:
-                    expansions.append(desc)
+    affect_words = get_affect_words(query)
+    for word in affect_words[:5]:
+        if word not in expansions:
+            expansions.append(word)
     
-    # Limit total expansions
+    if WORDNET_AVAILABLE:
+        words = re.findall(r'\b[a-zA-Z]{4,}\b', query.lower())
+        for word in words[:3]:
+            syns = get_synonyms(word, max_synonyms=2)
+            for syn in syns:
+                if syn not in expansions and syn not in query.lower():
+                    expansions.append(syn)
+    
     expansions = expansions[:max_expansions]
     
     if expansions:
@@ -158,37 +117,23 @@ def expand_mood_query(query: str, max_expansions: int = 6) -> str:
 
 
 def detect_mood_intent(query: str) -> bool:
-    """
-    Detect if a query is mood/emotion-based vs. specific artist search.
-    """
-    # Check for NRC emotions
     if NRCLEX_AVAILABLE:
         emotions = analyze_emotions(query)
         if any(score > 0.1 for score in emotions.values()):
             return True
-    
-    # Check for mood keywords
-    mood_keywords = [
-        "feeling", "vibes", "mood", "when", "for",
-        "sad", "happy", "chill", "emotional", "nostalgic"
-    ]
-    query_lower = query.lower()
-    return any(kw in query_lower for kw in mood_keywords)
+    return False
 
 
 def get_emotion_summary(query: str) -> dict:
-    """
-    Get a summary of detected emotions for debugging/display.
-    """
     if not NRCLEX_AVAILABLE:
         return {"error": "NRCLex not installed"}
-    
     try:
         emotion = NRCLex(query)
         return {
             "top_emotions": get_top_emotions(query),
+            "raw_scores": emotion.raw_emotion_scores,
             "frequencies": emotion.affect_frequencies,
-            "word_count": len(query.split()),
+            "affect_words": list(emotion.affect_dict.keys()),
         }
     except Exception as e:
         return {"error": str(e)}

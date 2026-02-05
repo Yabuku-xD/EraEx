@@ -11,3 +11,9 @@ tqdm
 jinja2
 redis
 nrclex
+bm25s
+scikit-learn
+zstandard
+transformers
+torch
+nltk

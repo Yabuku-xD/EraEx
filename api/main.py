@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).parent.parent
 
 app = FastAPI(
     title="ERAEX",
-    description="Golden Era(2013-2018)",
+    description="Golden Era(2012-2018)",
     version="1.0.0"
 )
 
@@ -126,7 +126,7 @@ async def lucky(request: LuckyRequest):
         recent = history[:5]
         combined_query = " ".join(recent)
     
-    years = list(range(2013, 2019))
+    years = list(range(2012, 2019))
     
     results = searcher.search(combined_query, years=years, k=15)
     

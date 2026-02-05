@@ -8,7 +8,7 @@ import math
 from config.settings import DATA_DIR
 
 
-CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-TinyBERT-L-2-v2"
 
 
 class SearchReranker:
@@ -108,10 +108,15 @@ class SearchReranker:
         for c in candidates:
             c['pop_score'] = self.popularity_score(c.get('playback_count', 0))
         
-        if len(candidates) <= 100:
+        rerank_limit = 30
+        if len(candidates) <= rerank_limit:
             candidates = self.rerank_with_cross_encoder(query, candidates, len(candidates))
         else:
-            candidates = self.rerank_with_cross_encoder(query, candidates[:100], 100)
+            top_candidates = self.rerank_with_cross_encoder(query, candidates[:rerank_limit], rerank_limit)
+            remaining = candidates[rerank_limit:]
+            for c in remaining:
+                c['cross_score'] = -10.0
+            candidates = top_candidates + remaining
         
         for c in candidates:
             semantic = c.get('score', 0)
