@@ -137,7 +137,7 @@ class SearchReranker:
                 cross_encoder_weight * cross +
                 0.1 * tag
             )
-            c['final_score'] = final
+            c['final_score'] = float(final)
         
         candidates.sort(key=lambda x: x['final_score'], reverse=True)
         

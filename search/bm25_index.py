@@ -116,6 +116,15 @@ class BM25Index:
         with open(path, 'rb') as f:
             save_data = pickle.load(f)
         
+        if "bm25" in save_data and BM25S_AVAILABLE:
+            self.index = save_data["bm25"]
+            self.doc_ids = save_data.get("doc_ids", [])
+            self.corpus_tokens = save_data.get("corpus_tokens", [])
+            self._backend = "bm25s"
+            self._loaded = True
+            print(f"BM25 index loaded: {len(self.doc_ids)} documents (bm25s, notebook format)")
+            return True
+        
         self.doc_ids = save_data["doc_ids"]
         self.corpus_tokens = save_data["corpus_tokens"]
         self._backend = save_data.get("backend", "rank_bm25")

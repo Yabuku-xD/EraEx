@@ -78,7 +78,7 @@ async def search_get(
     
     results = searcher.search(q, years=year_list, k=limit)
     
-    return {"query": q, "results": results, "count": len(results)}
+    return {"query": q, "results": convert_numpy(results), "count": len(results)}
 
 
 @app.post("/search")
@@ -90,7 +90,21 @@ async def search_post(request: SearchRequest):
     
     results = searcher.search(request.query, years=years, k=request.top_k)
     
-    return {"query": request.query, "results": results, "count": len(results)}
+    return {"query": request.query, "results": convert_numpy(results), "count": len(results)}
+
+def convert_numpy(obj):
+    import numpy as np
+    if isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    if isinstance(obj, (np.floating, np.float32, np.float64)):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, dict):
+        return {k: convert_numpy(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [convert_numpy(i) for i in obj]
+    return obj
 
 
 @app.post("/check_links")
@@ -135,4 +149,4 @@ async def lucky(request: LuckyRequest):
         random.shuffle(results)
         results = results[:10]
     
-    return {"query": combined_query, "results": results, "count": len(results)}
+    return {"query": combined_query, "results": convert_numpy(results), "count": len(results)}

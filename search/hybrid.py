@@ -42,7 +42,8 @@ class MusicSearcher:
             self.indexes[year] = load_index(index_path)
             
             ids_df = pl.read_parquet(ids_path)
-            self.id_maps[year] = ids_df["track_id"].to_list()
+            id_col = "track_id" if "track_id" in ids_df.columns else "permalink_url"
+            self.id_maps[year] = ids_df[id_col].to_list()
             
             if meta_path.exists():
                 self.metadata[year] = pl.read_parquet(meta_path)
@@ -88,8 +89,9 @@ class MusicSearcher:
             )
             
             for row in matches.iter_rows(named=True):
+                tid = row.get("track_id") or row.get("permalink_url", "")
                 results.append({
-                    "track_id": row["track_id"],
+                    "track_id": tid,
                     "score": 2.0,
                     "year": year,
                     "index": row["_idx"],
@@ -203,31 +205,28 @@ class MusicSearcher:
         return combined[:k]
     
     def enrich_bm25_results(self, results: list) -> list:
-        enriched = []
-        
-        track_to_meta = {}
+        result_by_id = {str(r.get("track_id", "")): r for r in results}
+        target_ids = list(result_by_id.keys())
+
         for year in self.metadata:
-            df = self.metadata[year].with_row_index("_idx")
-            for row in df.iter_rows(named=True):
-                track_to_meta[str(row.get("track_id", ""))] = {
-                    "year": year,
-                    "index": row["_idx"],
-                    "title": row.get("title", ""),
-                    "artist": row.get("artist", ""),
-                    "genre": row.get("genre", ""),
-                    "permalink_url": row.get("permalink_url", ""),
-                    "playback_count": row.get("playback_count", 0)
-                }
-        
-        for r in results:
-            track_id = str(r.get("track_id", ""))
-            if track_id in track_to_meta:
-                meta = track_to_meta[track_id]
-                r.update(meta)
-                r["score"] = r.get("bm25_score", 0)
-            enriched.append(r)
-        
-        return enriched
+            df = self.metadata[year]
+            id_col = "track_id" if "track_id" in df.columns else "permalink_url"
+            matches = df.filter(pl.col(id_col).cast(pl.Utf8).is_in(target_ids))
+
+            for row in matches.iter_rows(named=True):
+                tid = str(row.get("track_id") or row.get("permalink_url", ""))
+                if tid in result_by_id:
+                    result_by_id[tid].update({
+                        "year": year,
+                        "title": row.get("title", ""),
+                        "artist": row.get("artist", ""),
+                        "genre": row.get("genre", ""),
+                        "permalink_url": row.get("permalink_url", ""),
+                        "playback_count": row.get("playback_count", 0),
+                        "score": result_by_id[tid].get("bm25_score", 0),
+                    })
+
+        return results
     
     def enrich_results(self, results: list) -> list:
         enriched = []

@@ -77,14 +77,14 @@ def mmr_by_metadata(
         best_score = float('-inf')
         best_idx = 0
         
-        selected_genres = {r.get("genre", "").lower() for r in selected}
-        selected_artists = {r.get("artist", "").lower() for r in selected}
+        selected_genres = {(r.get("genre") or "").lower() for r in selected}
+        selected_artists = {(r.get("artist") or "").lower() for r in selected}
         
         for i, cand in enumerate(remaining):
             rel = cand.get("final_score", cand.get("score", 0))
             
-            cand_genre = cand.get("genre", "").lower()
-            cand_artist = cand.get("artist", "").lower()
+            cand_genre = (cand.get("genre") or "").lower()
+            cand_artist = (cand.get("artist") or "").lower()
             
             genre_penalty = 0.3 if cand_genre and cand_genre in selected_genres else 0
             artist_penalty = 0.5 if cand_artist and cand_artist in selected_artists else 0

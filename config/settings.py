@@ -14,8 +14,8 @@ INDEXES_DIR = DATA_DIR / "indexes"
 OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", "localhost")
 OPENSEARCH_PORT = int(os.getenv("OPENSEARCH_PORT", 9200))
 
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
-EMBEDDING_DIM = 384
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "colbert-ir/colbertv2.0")
+EMBEDDING_DIM = 768
 
 YEAR_RANGE = range(2012, 2019)
 
