@@ -30,23 +30,39 @@ class MusicSearcher:
         self.model = get_embedder(use_colbert=True)
         self.model.load()
         
-        for year in YEAR_RANGE:
+        from concurrent.futures import ThreadPoolExecutor
+        
+        def load_year_data(year):
             index_path = INDEXES_DIR / f"faiss_{year}.index"
             ids_path = EMBEDDINGS_DIR / f"ids_{year}.parquet"
             meta_path = PROCESSED_DIR / "music_ready" / f"year={year}" / "data.parquet"
             
             if not index_path.exists():
-                continue
+                return None
             
             print(f"Loading {year}...")
-            self.indexes[year] = load_index(index_path)
+            idx = load_index(index_path, mmap=True)
             
             ids_df = pl.read_parquet(ids_path)
             id_col = "track_id" if "track_id" in ids_df.columns else "permalink_url"
-            self.id_maps[year] = ids_df[id_col].to_list()
+            ids_list = ids_df[id_col].to_list()
             
+            meta_df = None
             if meta_path.exists():
-                self.metadata[year] = pl.read_parquet(meta_path)
+                meta_df = pl.read_parquet(meta_path)
+                
+            return (year, idx, ids_list, meta_df)
+
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(load_year_data, YEAR_RANGE)
+            
+            for res in results:
+                if res:
+                    y, idx, ids, meta = res
+                    self.indexes[y] = idx
+                    self.id_maps[y] = ids
+                    if meta is not None:
+                        self.metadata[y] = meta
         
         bm25_path = INDEXES_DIR / "bm25_index.pkl"
         if bm25_path.exists():
