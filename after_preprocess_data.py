@@ -3,7 +3,7 @@ import polars as pl
 
 base_dir = Path(__file__).parent
 ready_dir = base_dir / "data" / "processed" / "music_ready"
-csv_dir = base_dir / "data" / "after_filtering"
+csv_dir = base_dir / "data" / "after_filtering_data"
 csv_dir.mkdir(parents=True, exist_ok=True)
 
 year_range = range(2012, 2019)
