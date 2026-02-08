@@ -1,202 +1,232 @@
-import asyncio
-import random
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from typing import List, Optional
-from src.config.settings import BASE_DIR, YEARS
-from src.utils.data_loader import data_loader
-from src.utils.link_checker import link_checker
-from src.search.retrieval import search_years, merge_candidates
-from src.search.scorer import score_candidates
-from src.search.reranker import rerank
+from flask import Flask, jsonify, request
+import sys
+import os
 
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Starting data loading in background...")
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(None, data_loader.load_all_years)
-    yield
-    print("Shutting down...")
+from src.search.candidates import CandidateGenerator
+from src.ranking.hybrid import HybridRanker
+from src.ranking.nostalgia import NostalgiaFilter
+from src.data.deezer import DeezerCollector
+from flask import render_template
+from langdetect import detect
 
+app = Flask(__name__, 
+            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates')),
+            static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../static')))
 
-app = FastAPI(
-    title="EraEx Music Recommendation API",
-    description="The Golden Era (2012-2018) Music Discovery",
-    version="1.0.0",
-    lifespan=lifespan
-)
+# Mock Global Objects for now - in production, load these
+# generator = CandidateGenerator('models/als_model.pkl', 'models/items.index')
+ranker = HybridRanker()
+nostalgia = NostalgiaFilter()
+deezer_collector = DeezerCollector() # Use our existing collector for searching
 
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'healthy'})
 
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
 
-class SearchRequest(BaseModel):
-    query: str
-    year_start: int = 2012
-    year_end: int = 2018
-    top_k: int = 10
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q', '')
+    
+    if not query:
+        return jsonify({'error': 'No query provided'}), 400
+        
+    print(f"User Query: {query}")
+    
+    # 1. Parse Intent (Mood vs Artist)
+    intent = nostalgia.get_search_query(query)
+    search_query = intent['query']
+    search_type = intent['type']
+    
+    print(f"Parsed Intent: {search_type} -> Deezer Query: {search_query}")
+    
 
+    # 2. Search Deezer
+    import requests
+    url = "https://api.deezer.com/search"
+    
 
-class LinkCheckRequest(BaseModel):
-    urls: List[dict]
+    # Helper to perform search and filter
+    def perform_search_and_filter(query_term, query_type, limit=60):
+        params = {'q': query_term, 'limit': limit}
+        try:
+            r = requests.get(url, params=params)
+            r_data = r.json()
+            raw = r_data.get('data', [])
+        except:
+            return []
+            
+        filtered = []
+        count = 0
+        import time
+        
+        for track in raw:
+            # We don't break early anymore so we can collect enough candidates to sort by popularity
+            # if count >= 20: break
+            
+            # STRICT ARTIST FILTERING
+            if query_type == 'artist':
+                artist_name = track['artist']['name'].lower()
+                target_artist = intent['original'].lower()
+                if target_artist not in artist_name:
+                    continue
 
+            # DATE & LANGUAGE FILTER (2012-2018)
+            try:
+                # 1. Check Language (Title + Artist)
+                # Using langdetect on the text
+                full_text = f"{track['artist']['name']} {track['title']}"
+                try:
+                    lang = detect(full_text)
+                    # Filter out common non-English languages
+                    if lang in ['es', 'fr', 'pt', 'it', 'de', 'ja', 'ko', 'zh', 'ru', 'ar', 'hi', 'tr', 'vi', 'pl', 'nl']:
+                        # Double check if it's really non-English or just short text error?
+                        # If strict mode, we skip. But let's be safe.
+                        # Using album genre as confirmation is safer, but let's filter explicit matches first.
+                        # Exception: If user searched for a specific Spanish artist, we shouldn't filter?
+                        # But current context is "stick with English".
+                        # Let's trust langdetect for explicit matches.
+                        continue
+                except:
+                    pass
 
-class LuckyRequest(BaseModel):
-    history: List[str] = []
+                # 2. Fetch Album for Date & Genre
+                # Check cached album info first if possible (not implemented here yet)
+                r_date = track.get('release_date') 
+                alb_genres = []
+                
+                if not r_date: 
+                    alb_id = track['album']['id']
+                    alb_resp = requests.get(f"https://api.deezer.com/album/{alb_id}").json()
+                    r_date = alb_resp.get('release_date')
+                    
+                    if 'genres' in alb_resp and alb_resp['genres']['data']:
+                        alb_genres = [g['name'] for g in alb_resp['genres']['data']]
 
+                # 3. Genre Blacklist (Proxy for Language)
+                # e.g. "Latin Music" is almost always Spanish
+                # We do this check regardless of langdetect result to catch things missed by it
+                non_english_genres = {
+                    'Latin Music', 'Musica Mexicana', 'Traditional Mexicano', 'Reggaeton', 
+                    'K-Pop', 'J-Pop', 'Asian Music', 'African Music', 'Brazilian Music', 
+                    'French Chanson', 'Schlager', 'German Pop', 'Spanish Pop', 'Indian Music', 
+                    'Arabic Music', 'Bollywood', 'C-Pop', 'Salsa', 'Bachata', 'Tango', 'Flamenco'
+                }
+                
+                # Check similarity/intersection
+                if any(g in non_english_genres for g in alb_genres):
+                    continue
 
-def format_track(track: dict) -> dict:
-    return {
-        "id": track.get("id") or track.get("track_id"),
-        "title": track.get("title", "Unknown"),
-        "artist": track.get("artist", "Unknown"),
-        "year": track.get("_year") or track.get("year"),
-        "genre": track.get("genre", ""),
-        "tags": track.get("tags", ""),
-        "permalink_url": track.get("permalink_url", ""),
-        "playback_count": track.get("playback_count", 0),
-        "score": round(track.get("_final_score", 0), 4),
-    }
-
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.post("/search")
-async def search(request: SearchRequest):
-    if not data_loader.is_ready():
-        return JSONResponse(
-            content={"error": "System is still loading data. Please wait a moment.", "retry": True},
-            status_code=503
-        )
-    year_start = max(min(request.year_start, request.year_end), 2012)
-    year_end = min(max(request.year_start, request.year_end), 2018)
-    if not request.query.strip():
-        return JSONResponse(
-            content={"error": "Query cannot be empty"},
-            status_code=400
-        )
-    try:
-        candidates = search_years(
-            query=request.query,
-            year_start=year_start,
-            year_end=year_end,
-            top_k=request.top_k * 8
-        )
-        unique_candidates = merge_candidates(candidates, top_k=request.top_k * 5)
-        scored_candidates = score_candidates(unique_candidates, request.query)
-        all_ranked = rerank(scored_candidates, top_k=request.top_k * 3)
-        urls_to_check = [
-            {"url": t.get("permalink_url", ""), "artist": t.get("artist", ""), "title": t.get("title", "")}
-            for t in all_ranked if t.get("permalink_url")
-        ]
-        link_results = await link_checker.check_links(urls_to_check)
-        final_results = []
-        used_urls = set()
-        for track in all_ranked:
-            if len(final_results) >= request.top_k:
-                break
-            url = track.get("permalink_url", "")
-            if url in used_urls:
+                if nostalgia.is_in_era(r_date):
+                    track['release_date'] = r_date
+                    filtered.append(track)
+                    count += 1
+            except:
                 continue
-            link_status = link_results.get(url, {})
-            status = link_status.get("status", "unknown")
-            if status in ["alive", "unknown"]:
-                final_results.append(track)
-                used_urls.add(url)
-            elif status == "replaced":
-                continue
-        formatted = [format_track(t) for t in final_results]
-        return {
-            "query": request.query,
-            "year_range": [year_start, year_end],
-            "results": formatted,
-            "total": len(formatted)
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"Search error: {e}")
-        return JSONResponse(
-            content={"error": str(e)},
-            status_code=500
-        )
+            
+            time.sleep(0.01) # Mild rate limit protection
+            
+        # Sort by popularity (rank) descending
+        # Deezer 'rank' is an integer (higher is better)
+        filtered.sort(key=lambda x: x.get('rank', 0), reverse=True)
+        return filtered
 
+    # 1. Primary Search
+    # Increase limit to 150 to ensure we find enough matching English tracks from 2012-2018
+    filtered_tracks = perform_search_and_filter(search_query, search_type, limit=150)
 
-@app.post("/check_links")
-async def check_links(request: LinkCheckRequest):
+    # 2. Fallback Logic
+    # If NO tracks passed the filter (or 0 raw results), and it was a general search
+    if not filtered_tracks and search_type == 'general':
+         print("Primary search yielded 0 results. Triggering Smart Fallback...")
+         
+         # Extract genres
+         genres = nostalgia.extract_genres(query)
+         if genres:
+             print(f"Fallback Genres: {genres}")
+             for genre in genres:
+                 # Search for genre
+                 found = perform_search_and_filter(f'genre:"{genre}"', 'mood', limit=50)
+                 filtered_tracks.extend(found)
+                 if len(filtered_tracks) >= 20: break
+         
+         # Last resort: Try splitting words
+         if not filtered_tracks:
+            words = query.split()
+            if len(words) > 1:
+                # Try last word (often noun)
+                fallback_term = words[-1]
+                print(f"Fallback Last Resort: {fallback_term}")
+                filtered_tracks.extend(perform_search_and_filter(fallback_term, 'general', limit=50))
+
+    # 3. Final Response setup (just remove the old logic block)
+    # Re-assign filtered_tracks to local var if needed or just use it in response
+            
+    return jsonify({
+        'query': query,
+        'intent': search_type,
+        'mood': intent.get('mood'),
+        'sentiment': intent.get('sentiment'),
+        'results': filtered_tracks
+    })
+
+@app.route('/recommend/<user_id>', methods=['GET'])
+def recommend(user_id):
     try:
-        results = await link_checker.check_links(request.urls)
-        return {"results": results}
+        user_id = int(user_id)
+        n = int(request.args.get('n', 20))
+        
+        # 1. Candidate Generation
+        # candidates_tuples = generator.get_candidates(user_id, k=500)
+        
+        # MOCK candidates for testing without trained model
+        candidates_tuples = [(123, 0.95), (456, 0.88), (789, 0.82)] 
+        
+        # 2. Enrich with metadata (In real app, fetch from DB/Parquet)
+        # mock_metadata_db = { ... }
+        candidates_enriched = []
+        for tid, score in candidates_tuples:
+            candidates_enriched.append({
+                'track_id': tid,
+                'cf_score': score,
+                'metadata': {
+                    'title': f'Track {tid}',
+                    'artist': 'Artist X',
+                    'genre': 'Pop',
+                    'rank': 500000,
+                    'release_date': '2024-01-01'
+                }
+            })
+            
+        # 3. Ranking
+        # user_prefs = generator.get_user_prefs(user_id) # Need logic to get user history
+        user_prefs = {'Pop': 0.5, 'Rock': 0.2} # Mock
+        
+        ranked = ranker.score(user_id, candidates_enriched, user_prefs)
+        
+        # 4. Format
+        response = []
+        for r in ranked[:n]:
+            response.append({
+                'id': r['track_id'],
+                'title': r['metadata']['title'],
+                'artist': r['metadata']['artist'],
+                'score': r['final_score']
+            })
+            
+        return jsonify({
+            'user_id': user_id,
+            'recommendations': response
+        })
+
     except Exception as e:
-        print(f"Link check error: {e}")
-        return JSONResponse(
-            content={"error": str(e)},
-            status_code=500
-        )
+        return jsonify({'error': str(e)}), 500
 
-
-@app.post("/lucky")
-async def lucky(request: LuckyRequest):
-    if not data_loader.is_ready():
-        return JSONResponse(
-            content={"error": "System is still loading data. Please wait a moment.", "retry": True},
-            status_code=503
-        )
-    if not request.history:
-        return JSONResponse(
-            content={"error": "No search history found. Try searching first!"},
-            status_code=400
-        )
-    try:
-        combined_query = " ".join(request.history[:5])
-        selected_years = random.sample(data_loader.get_loaded_years(), min(3, len(data_loader.get_loaded_years())))
-        if not selected_years:
-            selected_years = [2014, 2015, 2016]
-        year_start = min(selected_years)
-        year_end = max(selected_years)
-        candidates = search_years(
-            query=combined_query,
-            year_start=year_start,
-            year_end=year_end,
-            top_k=100
-        )
-        unique_candidates = merge_candidates(candidates, top_k=50)
-        scored = score_candidates(unique_candidates, combined_query)
-        if len(scored) > 10:
-            selected = random.sample(scored[:30], min(10, len(scored)))
-        else:
-            selected = scored[:10]
-        formatted = [format_track(t) for t in selected]
-        return {
-            "query": combined_query,
-            "results": formatted,
-            "total": len(formatted)
-        }
-    except Exception as e:
-        print(f"Lucky error: {e}")
-        return JSONResponse(
-            content={"error": str(e)},
-            status_code=500
-        )
-
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "ok",
-        "loaded_years": data_loader.get_loaded_years(),
-        "ready": data_loader.is_ready()
-    }
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)

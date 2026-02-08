@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EraEx - Nostalgia Machine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="overlay"></div>
+    <div class="container">
+        <header>
+            <h1>EraEx <span class="year-badge">2012-2018</span></h1>
+            <p>Relive the golden era of streaming.</p>
+        </header>
+
+        <main>
+            <div class="search-box">
+                <input type="text" id="query">
+                <button onclick="searchMusic()">Travel Back</button>
+            </div>
+
+            <div id="results" class="results-grid">
+                <!-- Results will appear here -->
+            </div>
+
+            <div id="loading" class="hidden">
+                <div class="spinner"></div> Searching the archives...
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function searchMusic() {
+            const query = document.getElementById('query').value;
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+
+            if (!query) return alert("Please enter an artist or a vibe!");
+
+            resultsDiv.innerHTML = '';
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                // No mood parameter needed anymore
+                const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                loadingDiv.classList.add('hidden');
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                    return;
+                }
+
+                if (data.results.length === 0) {
+                    resultsDiv.innerHTML = `<p class="empty">No tracks found from 2012-2018 for this query. Try a different query!</p>`;
+                    return;
+                }
+
+
+                // Show intent/mood if detected
+                // (Badge removal requested by user)
+
+                data.results.forEach(track => {
+                    const card = document.createElement('div');
+                    card.className = 'track-card';
+                    card.innerHTML = `
+                        <div class="cover-art">
+                            <img src="${track.album.cover_medium}" alt="${track.title}">
+                            <div class="play-overlay">▶</div>
+                        </div>
+                        <div class="track-info">
+                            <h3>${track.title}</h3>
+                            <p>${track.artist.name}</p>
+                            <span class="year">${track.release_date.split('-')[0]}</span>
+                        </div>
+                        <audio controls src="${track.preview}"></audio>
+                    `;
+                    card.querySelector('.cover-art').onclick = () => {
+                        const audio = card.querySelector('audio');
+                        if (audio.paused) {
+                            // Stop others
+                            document.querySelectorAll('audio').forEach(a => a.pause());
+                            audio.play();
+                        }
+                        else audio.pause();
+                    };
+                    resultsDiv.appendChild(card);
+                });
+
+            } catch (e) {
+                loadingDiv.classList.add('hidden');
+                resultsDiv.innerHTML = `<p class="error">Something went wrong. The time machine is jammed.</p>`;
+            }
+        }
+
+        document.getElementById('query').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') searchMusic();
+        });
+    </script>
+</body>
+
+</html>
