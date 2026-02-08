@@ -12,7 +12,7 @@ MUSIC_READY_DIR = PROCESSED_DIR / "music_ready"
 
 YEARS = [2012, 2013, 2014, 2015, 2016, 2017, 2018]
 
-SBERT_MODEL_NAME = "all-MiniLM-L6-v2"
+SBERT_MODEL_NAME = "all-mpnet-base-v2"
 
 DEFAULT_TOP_K = 50
 FAISS_NPROBE = 32
@@ -27,5 +27,26 @@ WEIGHTS = {
 MMR_LAMBDA = 0.7
 MIN_ARTIST_GAP = 3
 
+import json
+
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", 8000))
+
+# Load Blocklist
+BLOCKLIST_FILE = DATA_DIR / "blocklist.json"
+BLOCKLIST = {
+    "artists": [],
+    "titles": [],
+    "keywords": []
+}
+
+if BLOCKLIST_FILE.exists():
+    try:
+        with open(BLOCKLIST_FILE, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+            # Merge or replace? Replace is simpler.
+            BLOCKLIST.update(loaded)
+    except Exception as e:
+        print(f"WARNING: Failed to load blocklist: {e}")
+else:
+    print(f"WARNING: Blocklist file not found at {BLOCKLIST_FILE}")

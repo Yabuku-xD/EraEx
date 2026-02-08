@@ -88,11 +88,31 @@ async def search(request: SearchRequest):
             query=request.query,
             year_start=year_start,
             year_end=year_end,
-            top_k=request.top_k * 5
+            top_k=request.top_k * 8
         )
-        unique_candidates = merge_candidates(candidates, top_k=request.top_k * 3)
+        unique_candidates = merge_candidates(candidates, top_k=request.top_k * 5)
         scored_candidates = score_candidates(unique_candidates, request.query)
-        final_results = rerank(scored_candidates, top_k=request.top_k)
+        all_ranked = rerank(scored_candidates, top_k=request.top_k * 3)
+        urls_to_check = [
+            {"url": t.get("permalink_url", ""), "artist": t.get("artist", ""), "title": t.get("title", "")}
+            for t in all_ranked if t.get("permalink_url")
+        ]
+        link_results = await link_checker.check_links(urls_to_check)
+        final_results = []
+        used_urls = set()
+        for track in all_ranked:
+            if len(final_results) >= request.top_k:
+                break
+            url = track.get("permalink_url", "")
+            if url in used_urls:
+                continue
+            link_status = link_results.get(url, {})
+            status = link_status.get("status", "unknown")
+            if status in ["alive", "unknown"]:
+                final_results.append(track)
+                used_urls.add(url)
+            elif status == "replaced":
+                continue
         formatted = [format_track(t) for t in final_results]
         return {
             "query": request.query,
@@ -101,6 +121,8 @@ async def search(request: SearchRequest):
             "total": len(formatted)
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Search error: {e}")
         return JSONResponse(
             content={"error": str(e)},

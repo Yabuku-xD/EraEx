@@ -18,19 +18,22 @@ class LinkChecker:
     ) -> dict:
         if url in self._cache:
             return self._cache[url]
+        
+        oembed_url = f"https://soundcloud.com/oembed?url={url}&format=json"
         try:
-            async with session.head(url, allow_redirects=True) as response:
+            async with session.get(oembed_url) as response:
                 if response.status == 200:
+                    # Valid track according to OEmbed
                     result = {"status": "alive", "url": url}
-                elif response.status in [301, 302, 303, 307, 308]:
-                    new_url = str(response.url)
-                    result = {"status": "healed", "url": url, "new_url": new_url}
-                else:
+                elif response.status in [404, 403]:
+                    # Explicitly dead or private
                     result = await self._try_youtube_fallback(artist, title, url)
-        except asyncio.TimeoutError:
-            result = await self._try_youtube_fallback(artist, title, url)
+                else:
+                    result = {"status": "alive", "url": url}
         except Exception:
-            result = await self._try_youtube_fallback(artist, title, url)
+             # Network error - assume alive
+            result = {"status": "alive", "url": url}
+            
         self._cache[url] = result
         return result
 
@@ -56,18 +59,22 @@ class LinkChecker:
         urls: List[dict]
     ) -> Dict[str, dict]:
         results = {}
-        async with aiohttp.ClientSession(timeout=self._timeout) as session:
-            tasks = []
-            for item in urls:
+        sem = asyncio.Semaphore(10) # Limit concurrency
+        
+        async def bounded_check(item):
+            async with sem:
                 url = item.get("url", "")
                 artist = item.get("artist", "")
                 title = item.get("title", "")
-                tasks.append(self.check_single_link(session, url, artist, title))
+                return await self.check_single_link(session, url, artist, title)
+
+        async with aiohttp.ClientSession(timeout=self._timeout) as session:
+            tasks = [bounded_check(item) for item in urls]
             responses = await asyncio.gather(*tasks, return_exceptions=True)
             for item, response in zip(urls, responses):
                 url = item.get("url", "")
                 if isinstance(response, Exception):
-                    results[url] = {"status": "dead", "url": url}
+                    results[url] = {"status": "unknown", "url": url}
                 else:
                     results[url] = response
         return results

@@ -49,6 +49,14 @@ class DataLoader:
         try:
             print(f"Loading FAISS index for {year}...")
             self.indexes[year] = faiss.read_index(str(index_path))
+            
+            
+            # Enable reconstruct() for Semantic Filtering
+            try:
+                self.indexes[year].make_direct_map()
+            except Exception as e:
+                print(f"Warning: make_direct_map failed for {year}: {e}")
+                
             print(f"Loading ID mappings for {year}...")
             self.ids[year] = pd.read_parquet(ids_path)
             if metadata_path.exists():
@@ -71,6 +79,9 @@ class DataLoader:
             if self.load_year(year):
                 loaded += 1
         self._loading = False
+        print(f"\n{'='*50}")
+        print(f"✓ READY TO SEARCH - {loaded} years loaded")
+        print(f"{'='*50}\n")
         return loaded
 
     def search_year(
@@ -116,16 +127,14 @@ class DataLoader:
         distances: np.ndarray
     ) -> List[dict]:
         results = []
-        if year not in self.ids:
+        if year not in self.metadata:
             return results
-        ids_df = self.ids[year]
-        meta_df = self.metadata.get(year, ids_df)
+        meta_df = self.metadata[year]
         for i, (idx, dist) in enumerate(zip(indices, distances)):
-            if idx < 0 or idx >= len(ids_df):
+            if idx < 0 or idx >= len(meta_df):
                 continue
             try:
-                id_row = ids_df.iloc[idx]
-                track_data = id_row.to_dict()
+                track_data = meta_df.iloc[idx].to_dict()
                 track_data["_distance"] = float(dist)
                 track_data["_year"] = year
                 track_data["_idx"] = int(idx)

@@ -10,3 +10,4 @@ aiohttp
 pydantic
 python-dotenv
 tqdm
+jinja2

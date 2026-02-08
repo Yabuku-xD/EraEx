@@ -25,7 +25,26 @@ def load_mood_lexicon() -> dict:
     else:
         with open(path, "r", encoding="utf-8") as f:
             _mood_lexicon = json.load(f)
-        print(f"Loaded mood lexicon with {len(_mood_lexicon)} words from {path}")
+        
+        # Inject custom moods for common queries
+        custom_moods = {
+            "ex": {"valence": 0.2, "arousal": 0.6},
+            "breakup": {"valence": 0.15, "arousal": 0.7},
+            "heartbreak": {"valence": 0.1, "arousal": 0.75},
+            "miss": {"valence": 0.3, "arousal": 0.5},
+            "missing": {"valence": 0.3, "arousal": 0.5},
+            "sad": {"valence": 0.1, "arousal": 0.4},
+            "depressed": {"valence": 0.05, "arousal": 0.3},
+            "cry": {"valence": 0.1, "arousal": 0.6},
+            "crying": {"valence": 0.1, "arousal": 0.6},
+            "party": {"valence": 0.85, "arousal": 0.8},
+            "dance": {"valence": 0.8, "arousal": 0.85},
+            "fun": {"valence": 0.9, "arousal": 0.7},
+            "happy": {"valence": 0.9, "arousal": 0.6},
+            "love": {"valence": 0.8, "arousal": 0.6},
+        }
+        _mood_lexicon.update(custom_moods)
+        print(f"Loaded mood lexicon with {len(_mood_lexicon)} words (including custom overrides) from {path}")
     return _mood_lexicon
 
 
