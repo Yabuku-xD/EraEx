@@ -36,71 +36,54 @@
     <script>
         async function searchMusic() {
             const query = document.getElementById('query').value;
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
+            async function performSearch() {
+                const query = document.getElementById('searchInput').value;
+                const isSonic = document.getElementById('sonicMode').checked;
+                const resultsDiv = document.getElementById('results');
 
-            if (!query) return alert("Please enter an artist or a vibe!");
+                if (!query) return;
 
-            resultsDiv.innerHTML = '';
-            loadingDiv.classList.remove('hidden');
+                resultsDiv.innerHTML = '<div class="track-card">Loading...</div>';
 
-            try {
-                // No mood parameter needed anymore
-                const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
+                try {
+                    let url;
+                    if (isSonic) {
+                        // SONIC SEARCH
+                        url = `/sonic?q=${encodeURIComponent(query)}&limit=9`;
+                    } else {
+                        // STANDARD (Nostalgia) SEARCH
+                        url = `/search?q=${encodeURIComponent(query)}`;
+                    }
 
-                loadingDiv.classList.add('hidden');
+                    const response = await fetch(url);
+                    const data = await response.json();
 
-                if (data.error) {
-                    resultsDiv.innerHTML = `<p class="error">${data.error}</p>`;
-                    return;
-                }
+                    resultsDiv.innerHTML = '';
 
-                if (data.results.length === 0) {
-                    resultsDiv.innerHTML = `<p class="empty">No tracks found from 2012-2018 for this query. Try a different query!</p>`;
-                    return;
-                }
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(track => {
+                            const card = document.createElement('div');
+                            card.className = 'track-card';
 
+                            // Handle slight schema diff between endpoints
+                            const title = track.title_short || track.title;
+                            const artist = track.artist.name || track.artist;
+                            const cover = track.album ? track.album.cover_medium : 'https://e-cdns-images.dzcdn.net/images/cover/d41d8cd98f00b204e9800998ecf8427e/250x250-000000-80-0-0.jpg';
 
-                // Show intent/mood if detected
-                // (Badge removal requested by user)
-
-                data.results.forEach(track => {
-                    const card = document.createElement('div');
-                    card.className = 'track-card';
-                    card.innerHTML = `
-                        <div class="cover-art">
-                            <img src="${track.album.cover_medium}" alt="${track.title}">
-                            <div class="play-overlay">▶</div>
-                        </div>
-                        <div class="track-info">
-                            <h3>${track.title}</h3>
-                            <p>${track.artist.name}</p>
-                            <span class="year">${track.release_date.split('-')[0]}</span>
-                        </div>
-                        <audio controls src="${track.preview}"></audio>
-                    `;
-                    card.querySelector('.cover-art').onclick = () => {
-                        const audio = card.querySelector('audio');
-                        if (audio.paused) {
-                            // Stop others
-                            document.querySelectorAll('audio').forEach(a => a.pause());
-                            audio.play();
+                            // Add "Sonic Score" badge if applicable
+                            let scoreBadge = '';
+                            if (track.score && isSonic) {
+                                const pct = Math.round(track.score * 100);
+                                scoreBadge = `<div style="font-size: 0.8em; color: #ff00ff; margin-bottom: 5px;">Match: ${pct}%</div>`;
+                            }
+                            loadingDiv.classList.add('hidden');
+                            resultsDiv.innerHTML = `<p class="error">Something went wrong. The time machine is jammed.</p>`;
                         }
-                        else audio.pause();
-                    };
-                    resultsDiv.appendChild(card);
-                });
-
-            } catch (e) {
-                loadingDiv.classList.add('hidden');
-                resultsDiv.innerHTML = `<p class="error">Something went wrong. The time machine is jammed.</p>`;
-            }
         }
 
-        document.getElementById('query').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') searchMusic();
-        });
+                    document.getElementById('query').addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') searchMusic();
+                    });
     </script>
 </body>
 

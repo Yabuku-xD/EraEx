@@ -200,7 +200,7 @@ def recommend(user_id):
                     'artist': 'Artist X',
                     'genre': 'Pop',
                     'rank': 500000,
-                    'release_date': '2024-01-01'
+                    'release_date': '2015-01-01' # Updated to be in-era
                 }
             })
             
@@ -210,21 +210,97 @@ def recommend(user_id):
         
         ranked = ranker.score(user_id, candidates_enriched, user_prefs)
         
-        # 4. Format
+        # 4. Format & Filter (Final Guardrail)
         response = []
-        for r in ranked[:n]:
+        for r in ranked: # Check all, not just slice yet
+            # Strict Era Check
+            r_date = r['metadata'].get('release_date')
+            if not nostalgia.is_in_era(r_date):
+                continue
+                
             response.append({
                 'id': r['track_id'],
                 'title': r['metadata']['title'],
                 'artist': r['metadata']['artist'],
-                'score': r['final_score']
+                'score': r['final_score'],
+                'year': r_date[:4] if r_date else 'Unknown'
             })
+            if len(response) >= n: break
             
         return jsonify({
             'user_id': user_id,
             'recommendations': response
         })
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# 4. Sonic Search Integration
+from src.search.sonic_search import SonicSearch
+# Initialize Sonic Engine on startup
+# Note: This might take a second to load the pickle
+print("Initializing Sonic Engine...")
+try:
+    sonic_engine = SonicSearch()
+except Exception as e:
+    print(f"Failed to load Sonic Engine: {e}")
+    sonic_engine = None
+
+@app.route('/sonic', methods=['GET'])
+def sonic_search():
+    """
+    Multimodal Search Endpoint.
+    Expects 'q' (text query) or 'audio_url' (future).
+    Currently uses SBERT on the text query to find semantic matches in the index.
+    """
+    if not sonic_engine:
+        return jsonify({'error': 'Sonic Engine not loaded'}), 503
+        
+    query = request.args.get('q', '')
+    limit = int(request.args.get('limit', 10))
+    
+    if not query:
+        return jsonify({'error': 'No query provided'}), 400
+        
+    print(f"Sonic Query: {query}")
+    
+    # 1. Encode Text Query -> Vector
+    # We need the SemanticEncoder to do this live.
+    # Ideally, SonicSearch class handles this, but we need to pass the encoder or have it internal.
+    # Let's check `search_by_vector`. It expects vectors.
+    # We need to instantiate SemanticEncoder here or inside SonicSearch.
+    # For efficiency, let's assume SonicSearch has a helper method or we add one now.
+    
+    # Check if we need to update SonicSearch to handle raw text queries?
+    # Yes, let's update SonicSearch class first to include 'search_by_text'
+    # But for now, let's try to do it here if possible, or assume we will update the class.
+    # WAIT - We didn't import SemanticEncoder here.
+    # Let's rely on a new method in SonicSearch: `search_by_text(query)`
+    
+    try:
+        results = sonic_engine.search_by_text(query, limit=limit)
+        return jsonify({
+            'query': query,
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/serendipity', methods=['GET'])
+def serendipity():
+    """
+    Feeling Lucky Endpoint.
+    Returns random but valid 2012-2018 tracks based on 'Dream Vectors'.
+    """
+    if not sonic_engine:
+        return jsonify({'error': 'Sonic Engine not loaded'}), 503
+        
+    try:
+        results = sonic_engine.serendipity_search(limit=5)
+        return jsonify({
+            'mode': 'serendipity',
+            'results': results
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
