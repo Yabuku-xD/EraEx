@@ -4,292 +4,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EraEx - Aura 1.2</title>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- GSAP for Premium Animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-
-    <!-- Google Fonts: Inter (Modern, Clean) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    <title>EraEx</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap"
         rel="stylesheet">
-
-    <!-- Phosphor Icons (Modern Alternative to Font Awesome) -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'deep-dark': '#0a0a14',
-                        'card-dark': '#12121e',
-                        'purple-glow': '#5b4dce',
-                        'pink-glow': '#c561f6',
-                        'cyan-glow': '#4de1f4',
-                        'text-muted': 'rgba(255,255,255,0.5)',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-
     <style>
+        :root {
+            --orange: #FF6B35;
+            --orange-light: #FF8C5A;
+            --white: #FFFFFF;
+            --black: #1A1A1A;
+            --gray: #6B6B6B;
+            --gray-light: #F5F5F5;
+            --gray-border: #E5E5E5;
+        }
+
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0a0a14;
-            color: white;
-            overflow-x: hidden;
-            min-height: 100vh;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
         }
 
-        /* Animated Background Mesh - Exact Match to Reference */
-        .bg-mesh {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            overflow: hidden;
-            pointer-events: none;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 60px;
         }
 
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.6;
-            will-change: transform;
+        nav {
+            padding: 40px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-border);
         }
 
-        .orb-1 {
-            width: 600px;
-            height: 600px;
-            background: linear-gradient(135deg, #5b4dce, #8b5cf6);
-            top: -150px;
-            left: -100px;
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--black);
+            letter-spacing: -0.5px;
         }
 
-        .orb-2 {
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, #c561f6, #f472b6);
-            bottom: -100px;
-            right: -100px;
+        .logo span {
+            color: var(--orange);
         }
 
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: linear-gradient(135deg, #4de1f4, #22d3ee);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.3;
+        .nav-info {
+            font-size: 0.85rem;
+            color: var(--gray);
         }
 
-        /* Glassmorphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .hero {
+            padding: 80px 0 60px;
+            max-width: 800px;
         }
 
-        .glass-strong {
-            background: rgba(18, 18, 30, 0.7);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .hero h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 80px;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .hero h1 span {
+            color: var(--orange);
         }
 
-        .sidebar:hover {
-            width: 260px;
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 500px;
         }
 
-        .sidebar:hover .nav-label {
-            opacity: 1;
-            transform: translateX(0);
+        .search-section {
+            padding: 40px 0;
         }
 
-        .nav-label {
-            opacity: 0;
-            transform: translateX(-10px);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .nav-item {
-            transition: all 0.2s ease;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .nav-item.active {
-            background: linear-gradient(90deg, rgba(91, 77, 206, 0.3), transparent);
-            border-left: 3px solid #5b4dce;
-        }
-
-        /* Cards with Gradient Border Effect */
-        .gradient-border {
+        .search-wrapper {
             position: relative;
-            background: #12121e;
-            border-radius: 24px;
-            overflow: hidden;
+            max-width: 600px;
         }
 
-        .gradient-border::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 24px;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-
-        /* Search Input with Glow */
-        .search-container {
-            position: relative;
-        }
-
-        .search-glow {
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(90deg, #5b4dce, #c561f6, #5b4dce);
+        .search-input {
+            width: 100%;
+            padding: 20px 24px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            border: 2px solid var(--gray-border);
             border-radius: 60px;
-            opacity: 0;
-            filter: blur(15px);
-            transition: opacity 0.3s ease;
-            z-index: -1;
+            background: var(--white);
+            color: var(--black);
+            outline: none;
+            transition: border-color 0.3s;
         }
 
-        .search-container:focus-within .search-glow {
-            opacity: 0.5;
+        .search-input:focus {
+            border-color: var(--orange);
         }
 
-        /* Stat Cards */
-        .stat-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .search-input::placeholder {
+            color: #B0B0B0;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px -15px rgba(91, 77, 206, 0.3);
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: var(--orange);
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
         }
 
-        /* Category Pills */
-        .category-pill {
-            transition: all 0.2s ease;
+        .search-btn:hover {
+            background: var(--orange-light);
+            transform: translateY(-50%) scale(1.05);
         }
 
-        .category-pill:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+        .tags {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
         }
 
-        .category-pill.active {
-            background: white;
-            color: #0a0a14;
-        }
-
-        /* Audio Waveform Animation */
-        .waveform-bar {
-            animation: wave 1s ease-in-out infinite;
-        }
-
-        @keyframes wave {
-
-            0%,
-            100% {
-                transform: scaleY(0.3);
-            }
-
-            50% {
-                transform: scaleY(1);
-            }
-        }
-
-        /* Notification Badge */
-        .notification-badge {
-            animation: pulse-badge 2s infinite;
-        }
-
-        @keyframes pulse-badge {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.7);
-            }
-
-            50% {
-                box-shadow: 0 0 0 8px rgba(251, 113, 133, 0);
-            }
-        }
-
-        /* Music Card */
-        .music-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .music-card:hover {
-            transform: scale(1.03);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .music-card:hover .play-btn {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .play-btn {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.8);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
+        .tag {
+            padding: 10px 20px;
+            border: 1px solid var(--gray-border);
+            border-radius: 30px;
             background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        .tag:hover {
+            border-color: var(--orange);
+            color: var(--orange);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .results-section {
+            padding: 60px 0 120px;
         }
 
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid rgba(91, 77, 206, 0.2);
-            border-top-color: #5b4dce;
-            animation: spin 1s linear infinite;
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .results-count {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .results-count strong {
+            color: var(--black);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 32px;
+        }
+
+        .card {
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+        }
+
+        .card:hover .card-img {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            object-fit: cover;
+            background: var(--gray-light);
+            margin-bottom: 16px;
+            transition: box-shadow 0.3s;
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-artist {
+            font-size: 0.85rem;
+            color: var(--gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px 0;
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gray-light);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
         }
 
         @keyframes spin {
@@ -297,453 +254,256 @@
                 transform: rotate(360deg);
             }
         }
+
+        .loading-text {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 80px 0;
+            color: var(--gray);
+        }
+
+        .player {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: var(--black);
+            color: var(--white);
+            padding: 16px 24px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+        }
+
+        .player.active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .player-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .player-info {
+            min-width: 150px;
+        }
+
+        .player-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .player-artist {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .player-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--orange);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            nav {
+                padding: 24px 0;
+            }
+        }
     </style>
 </head>
 
-<body class="flex h-screen">
-
-    <!-- Animated Background -->
-    <div class="bg-mesh">
-        <div class="orb orb-1" id="orb1"></div>
-        <div class="orb orb-2" id="orb2"></div>
-        <div class="orb orb-3" id="orb3"></div>
-    </div>
-
-    <!-- Sidebar -->
-    <aside class="sidebar glass-strong h-full flex flex-col z-50 relative">
-        <!-- Logo -->
-        <div class="p-6 flex items-center gap-3">
-            <div
-                class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-glow to-pink-glow flex items-center justify-center shadow-lg shadow-purple-glow/30">
-                <i class="ph-bold ph-waveform text-white text-xl"></i>
-            </div>
-            <span class="nav-label font-bold text-lg">Aura 1.2</span>
-            <span
-                class="nav-label ml-auto text-[10px] text-purple-glow bg-purple-glow/20 px-2 py-0.5 rounded-full">BETA</span>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 px-3 py-4 space-y-1">
-            <a href="#" class="nav-item active flex items-center gap-4 px-4 py-3 rounded-xl">
-                <i class="ph-bold ph-house text-xl text-purple-glow"></i>
-                <span class="nav-label font-medium">Home</span>
-            </a>
-            <a href="#" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl text-text-muted hover:text-white">
-                <i class="ph-bold ph-compass text-xl"></i>
-                <span class="nav-label font-medium">Discover</span>
-            </a>
-            <a href="#" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl text-text-muted hover:text-white">
-                <i class="ph-bold ph-clock-counter-clockwise text-xl"></i>
-                <span class="nav-label font-medium">History</span>
-            </a>
-            <a href="#" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl text-text-muted hover:text-white">
-                <i class="ph-bold ph-heart text-xl"></i>
-                <span class="nav-label font-medium">Favorites</span>
-            </a>
-            <a href="#" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl text-text-muted hover:text-white">
-                <i class="ph-bold ph-vinyl-record text-xl"></i>
-                <span class="nav-label font-medium">Playlists</span>
-            </a>
+<body>
+    <div class="container">
+        <nav>
+            <div class="logo">Era<span>Ex</span></div>
+            <div class="nav-info">2012 — 2018</div>
         </nav>
 
-        <!-- Settings at bottom -->
-        <div class="px-3 pb-6">
-            <a href="#" class="nav-item flex items-center gap-4 px-4 py-3 rounded-xl text-text-muted hover:text-white">
-                <i class="ph-bold ph-gear-six text-xl"></i>
-                <span class="nav-label font-medium">Settings</span>
-            </a>
-        </div>
-    </aside>
+        <section class="hero">
+            <h1>Discover the <span>golden era</span> of music.</h1>
+            <p>Search for artists, songs, or describe a mood to explore tracks from 2012-2018.</p>
+        </section>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 overflow-y-auto relative z-10">
-        <!-- Top Bar -->
-        <header class="flex items-center justify-between px-10 py-6">
-            <div class="text-sm text-text-muted">
-                <span class="text-purple-glow">●</span> Sonic Engine Online
+        <section class="search-section">
+            <div class="search-wrapper">
+                <input type="text" id="query" class="search-input"
+                    placeholder="Try 'PARTYNEXTDOOR' or 'chill midnight vibes'"
+                    onkeypress="if(event.key==='Enter') search()">
+                <button class="search-btn" onclick="search()">→</button>
             </div>
-            <div class="flex items-center gap-4">
-                <!-- Notification -->
-                <button
-                    class="relative w-10 h-10 rounded-xl glass flex items-center justify-center hover:bg-white/10 transition">
-                    <i class="ph ph-bell text-xl"></i>
-                    <span
-                        class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full text-[10px] font-bold flex items-center justify-center notification-badge">3</span>
-                </button>
-                <!-- Avatar -->
-                <div class="flex items-center gap-3 pl-4 border-l border-white/10">
-                    <img src="https://ui-avatars.com/api/?name=User&background=5b4dce&color=fff&bold=true"
-                        class="w-9 h-9 rounded-xl">
-                    <div class="nav-label">
-                        <div class="text-sm font-medium">User</div>
-                        <div class="text-xs text-text-muted">Pro Plan</div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Hero Section -->
-        <section class="px-10 py-8 text-center">
-            <p class="text-sm text-text-muted tracking-widest uppercase mb-4">Good Afternoon</p>
-            <h1 class="text-5xl md:text-6xl font-bold leading-tight mb-8">
-                You're on a wave of<br>
-                <span
-                    class="bg-gradient-to-r from-purple-glow via-pink-glow to-purple-glow bg-clip-text text-transparent">nostalgia!</span>
-            </h1>
-
-            <!-- Search Bar -->
-            <div class="max-w-2xl mx-auto search-container mb-6">
-                <div class="search-glow"></div>
-                <div class="glass-strong rounded-full flex items-center px-2 py-2">
-                    <input type="text" id="query"
-                        class="flex-1 bg-transparent text-white px-6 py-3 outline-none placeholder-text-muted text-base"
-                        placeholder="Enter Message" autocomplete="off">
-                    <button onclick="searchMusic()"
-                        class="w-12 h-12 rounded-full bg-gradient-to-r from-purple-glow to-pink-glow flex items-center justify-center hover:opacity-90 transition shadow-lg shadow-purple-glow/30">
-                        <i class="ph-bold ph-microphone text-white text-xl"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="flex items-center justify-center gap-3 flex-wrap">
-                <button onclick="setQuery('2015 Pop Hits')"
-                    class="glass px-4 py-2 rounded-full text-sm flex items-center gap-2 hover:bg-white/10 transition">
-                    <i class="ph ph-film-reel text-purple-glow"></i> Recommend a song
-                </button>
-                <button onclick="setQuery('Lo-Fi Study Beats')"
-                    class="glass px-4 py-2 rounded-full text-sm flex items-center gap-2 hover:bg-white/10 transition">
-                    <i class="ph ph-image text-cyan-glow"></i> Generate vibe
-                </button>
-                <button onclick="setQuery('Sad Midnight Drive')"
-                    class="glass px-4 py-2 rounded-full text-sm flex items-center gap-2 hover:bg-white/10 transition">
-                    <i class="ph ph-pencil-line text-pink-glow"></i> Write a mood
-                </button>
-                <button onclick="setQuery('2014 Summer')"
-                    class="glass px-4 py-2 rounded-full text-sm flex items-center gap-2 hover:bg-white/10 transition">
-                    <i class="ph ph-chart-line-up text-green-400"></i> Data analysis
-                </button>
-                <button class="px-3 py-2 text-sm text-text-muted hover:text-white transition">More</button>
+            <div class="tags">
+                <button class="tag" onclick="setQuery('Drake')">Drake</button>
+                <button class="tag" onclick="setQuery('The Weeknd')">The Weeknd</button>
+                <button class="tag" onclick="setQuery('PARTYNEXTDOOR')">PARTYNEXTDOOR</button>
+                <button class="tag" onclick="setQuery('chill 2015 vibes')">Chill 2015</button>
+                <button class="tag" onclick="setQuery('sad midnight')">Sad Midnight</button>
             </div>
         </section>
 
-        <!-- Discover Section -->
-        <section class="px-10 py-6">
-            <h2 class="text-xl font-semibold mb-5">Discover</h2>
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Searching...</div>
+        </div>
 
-            <!-- Category Pills -->
-            <div class="flex items-center gap-3 mb-8 flex-wrap">
-                <button
-                    class="category-pill active px-4 py-2 rounded-full text-sm font-medium border border-transparent">All</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">Favorites</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">2012</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">2014</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">2016</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">Lifestyle</button>
-                <button
-                    class="category-pill glass px-4 py-2 rounded-full text-sm font-medium text-text-muted border border-white/10">Programs</button>
+        <section id="results-section" class="results-section" style="display: none;">
+            <div class="results-header">
+                <div id="results-count" class="results-count"></div>
             </div>
-
-            <!-- Stat Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-                <!-- Card 1: Heart Rate (Waveform) -->
-                <div class="stat-card gradient-border rounded-3xl p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <p class="text-xs text-text-muted mb-1">Audio Fingerprint</p>
-                            <p class="text-sm text-cyan-glow">analyzing</p>
-                        </div>
-                        <i class="ph ph-caret-right text-text-muted"></i>
-                    </div>
-                    <div class="flex items-end gap-1 h-16">
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 40%; animation-delay: 0s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 70%; animation-delay: 0.1s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 50%; animation-delay: 0.2s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 90%; animation-delay: 0.3s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 60%; animation-delay: 0.4s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 80%; animation-delay: 0.5s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 45%; animation-delay: 0.6s;"></div>
-                        <div class="waveform-bar w-2 bg-gradient-to-t from-transparent to-cyan-glow rounded"
-                            style="height: 70%; animation-delay: 0.7s;"></div>
-                    </div>
-                    <div class="flex items-baseline gap-1 mt-4">
-                        <span class="text-4xl font-bold">67</span>
-                        <span class="text-sm text-text-muted">BPM</span>
-                    </div>
-                </div>
-
-                <!-- Card 2: Training Program (Era) -->
-                <div
-                    class="stat-card gradient-border rounded-3xl p-6 bg-gradient-to-br from-purple-glow/10 to-transparent">
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <p class="text-xs text-text-muted mb-1">Era Focus</p>
-                            <p class="text-sm text-purple-glow">The Golden Age</p>
-                        </div>
-                        <i class="ph ph-caret-right text-text-muted"></i>
-                    </div>
-                    <div class="flex items-baseline gap-1 mt-8">
-                        <span class="text-5xl font-bold">24</span>
-                        <span class="text-lg text-text-muted">Days</span>
-                    </div>
-                    <p class="text-xs text-text-muted mt-2">Until 2015 Anniversary</p>
-                </div>
-
-                <!-- Card 3: Sleep Score (Sonic) -->
-                <div class="stat-card gradient-border rounded-3xl p-6 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-pink-glow/20 to-transparent"></div>
-                    <div class="relative z-10">
-                        <div class="flex items-start justify-between mb-4">
-                            <div>
-                                <p class="text-xs text-text-muted mb-1">Sonic Score</p>
-                                <p class="text-sm text-pink-glow">Cycle</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between mt-6">
-                            <div class="flex gap-0.5">
-                                <div class="w-1 h-8 bg-pink-glow/30 rounded"></div>
-                                <div class="w-1 h-12 bg-pink-glow/50 rounded"></div>
-                                <div class="w-1 h-6 bg-pink-glow/30 rounded"></div>
-                                <div class="w-1 h-10 bg-pink-glow/70 rounded"></div>
-                                <div class="w-1 h-14 bg-pink-glow rounded"></div>
-                                <div class="w-1 h-8 bg-pink-glow/50 rounded"></div>
-                            </div>
-                            <div class="text-right">
-                                <div class="flex items-baseline justify-end">
-                                    <span class="text-4xl font-bold">7.4</span>
-                                    <span class="text-xs text-pink-glow ml-1">+</span>
-                                </div>
-                                <p class="text-xs text-text-muted">Hours</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Results Section -->
-            <div id="loading" class="hidden text-center py-16">
-                <div class="spinner w-12 h-12 rounded-full mx-auto mb-4"></div>
-                <p class="text-sm text-purple-glow tracking-widest uppercase">Analyzing Vectors...</p>
-            </div>
-
-            <div id="results" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 pb-32">
-                <!-- Cards will be injected here -->
-            </div>
+            <div id="results" class="grid"></div>
         </section>
-    </main>
+    </div>
 
-    <!-- Player Bar (Hidden by Default) -->
-    <div id="player-bar"
-        class="fixed bottom-0 left-20 right-0 h-24 glass-strong z-50 flex items-center px-8 transform translate-y-full transition-transform duration-500">
-        <div class="flex items-center gap-4 w-1/3">
-            <img src="" id="player-img" class="w-14 h-14 rounded-xl object-cover bg-card-dark">
-            <div>
-                <h4 id="player-title" class="font-medium text-sm truncate max-w-[180px]">No track selected</h4>
-                <p id="player-artist" class="text-xs text-text-muted truncate max-w-[180px]">-</p>
-            </div>
+    <div id="player" class="player">
+        <img id="player-img" class="player-img" src="">
+        <div class="player-info">
+            <div id="player-title" class="player-title"></div>
+            <div id="player-artist" class="player-artist"></div>
         </div>
-
-        <div class="flex-1 flex flex-col items-center gap-2">
-            <div class="flex items-center gap-6">
-                <button class="text-text-muted hover:text-white transition"><i
-                        class="ph ph-shuffle text-lg"></i></button>
-                <button class="text-text-muted hover:text-white transition"><i
-                        class="ph-bold ph-skip-back text-xl"></i></button>
-                <button onclick="togglePlay()" id="play-pause-btn"
-                    class="w-12 h-12 rounded-full bg-white text-deep-dark flex items-center justify-center hover:scale-105 transition shadow-lg">
-                    <i class="ph-bold ph-pause text-xl"></i>
-                </button>
-                <button class="text-text-muted hover:text-white transition"><i
-                        class="ph-bold ph-skip-forward text-xl"></i></button>
-                <button class="text-text-muted hover:text-white transition"><i
-                        class="ph ph-repeat text-lg"></i></button>
-            </div>
-            <div class="w-full max-w-md flex items-center gap-3">
-                <span class="text-[10px] text-text-muted">0:00</span>
-                <div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <div class="w-1/3 h-full bg-gradient-to-r from-purple-glow to-pink-glow rounded-full"></div>
-                </div>
-                <span class="text-[10px] text-text-muted">0:30</span>
-            </div>
-        </div>
-
-        <div class="w-1/3 flex justify-end items-center gap-4">
-            <i class="ph ph-microphone text-text-muted"></i>
-            <i class="ph ph-queue text-text-muted"></i>
-            <i class="ph ph-speaker-high text-text-muted"></i>
-            <div class="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div class="w-2/3 h-full bg-white/50 rounded-full"></div>
-            </div>
-        </div>
+        <button class="player-btn" onclick="togglePlay()">⏸</button>
     </div>
 
     <script>
-        // GSAP Orb Animations
-        gsap.to("#orb1", {
-            x: 50, y: 30,
-            duration: 8,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut"
-        });
+        let audio = null;
+        let playing = false;
 
-        gsap.to("#orb2", {
-            x: -40, y: -20,
-            duration: 10,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut"
-        });
-
-        gsap.to("#orb3", {
-            scale: 1.2,
-            duration: 6,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut"
-        });
-
-        // Search Logic
-        let isSonicMode = true;
-        let currentAudio = null;
-
-        function setQuery(text) {
-            document.getElementById('query').value = text;
-            searchMusic();
+        function setQuery(q) {
+            document.getElementById('query').value = q;
+            search();
         }
 
-        async function searchMusic() {
-            const query = document.getElementById('query').value;
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
+        async function search() {
+            const q = document.getElementById('query').value.trim();
+            if (!q) return;
 
-            if (!query) return;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
 
-            resultsDiv.innerHTML = '';
-            loadingDiv.classList.remove('hidden');
+            const moods = ['sad', 'happy', 'chill', 'vibe', 'energy', 'workout', 'study', 'relax', 'lo-fi', 'lofi', 'midnight', 'drive', 'summer', 'nostalgic', 'melancholy', 'upbeat', 'calm', 'focus', 'romantic', 'dark', 'dreamy'];
+            const isMood = moods.some(m => q.toLowerCase().includes(m));
+            const endpoint = isMood ? '/sonic' : '/search';
 
             try {
-                const endpoint = '/sonic';
-                const url = `${endpoint}?q=${encodeURIComponent(query)}&limit=10`;
-                const response = await fetch(url);
-                const data = await response.json();
+                const res = await fetch(`${endpoint}?q=${encodeURIComponent(q)}&limit=30`);
+                const data = await res.json();
 
-                loadingDiv.classList.add('hidden');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results-section').style.display = 'block';
+
+                const grid = document.getElementById('results');
+                grid.innerHTML = '';
 
                 if (data.results && data.results.length > 0) {
-                    data.results.forEach((track, index) => {
-                        const title = track.title_short || track.title;
-                        const artist = track.artist.name || track.artist;
-                        const cover = track.album ? track.album.cover_medium : 'https://e-cdns-images.dzcdn.net/images/cover/d41d8cd98f00b204e9800998ecf8427e/250x250-000000-80-0-0.jpg';
-                        const preview = track.preview || '';
-                        const year = track.release_date ? track.release_date.split('-')[0] : 'N/A';
+                    const cleanText = (str) => str.replace(/\s*[\(\[]?\s*(feat\.?|featuring|ft\.)\s+[^\)\]]+[\)\]]?$/i, '').trim();
 
-                        let scoreHtml = '';
-                        if (track.score) {
-                            const pct = Math.round(track.score * 100);
-                            scoreHtml = `<div class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-purple-glow text-[10px] font-bold px-2 py-1 rounded-lg">${pct}%</div>`;
-                        }
+                    let filtered = data.results;
+                    if (!isMood) {
+                        const queryLower = q.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        filtered = data.results.filter(t => {
+                            const artistName = (t.artist?.name || t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                            return artistName.includes(queryLower) || queryLower.includes(artistName);
+                        });
+                    }
+
+                    const seen = new Set();
+                    const unique = filtered.filter(t => {
+                        const title = (t.title_short || t.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const artist = (t.artist?.name || t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const key = `${title}-${artist}`;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
+
+                    document.getElementById('results-count').innerHTML = `<strong>${Math.min(unique.length, 15)}</strong> results for "${q}"`;
+
+                    unique.slice(0, 15).forEach(track => {
+                        const title = cleanText(track.title_short || track.title);
+                        const artist = cleanText(track.artist?.name || track.artist || 'Unknown');
+                        const cover = track.album?.cover_medium || track.cover || 'https://placehold.co/200x200/F5F5F5/999?text=No+Art';
+                        const preview = track.preview || '';
 
                         const card = document.createElement('div');
-                        card.className = 'music-card gradient-border rounded-2xl p-3 cursor-pointer';
-                        card.style.animationDelay = `${index * 0.05}s`;
+                        card.className = 'card';
                         card.innerHTML = `
-                            <div class="aspect-square rounded-xl overflow-hidden mb-3 relative">
-                                <img src="${cover}" class="w-full h-full object-cover">
-                                ${scoreHtml}
-                                <div class="play-btn absolute top-1/2 left-1/2 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl">
-                                    <i class="ph-bold ph-play text-deep-dark text-xl ml-0.5"></i>
-                                </div>
-                            </div>
-                            <h3 class="font-semibold text-sm truncate">${title}</h3>
-                            <p class="text-xs text-text-muted truncate">${artist} • ${year}</p>
+                            <img src="${cover}" class="card-img" alt="${title}" onerror="this.src='https://placehold.co/200x200/F5F5F5/999?text=No+Art'">
+                            <div class="card-title">${title}</div>
+                            <div class="card-artist">${artist}</div>
                         `;
-
-                        if (preview) {
-                            card.onclick = () => playTrack(preview, title, artist, cover);
-                        }
-
-                        resultsDiv.appendChild(card);
-
-                        // GSAP entrance animation
-                        gsap.from(card, {
-                            opacity: 0,
-                            y: 30,
-                            duration: 0.5,
-                            delay: index * 0.08,
-                            ease: "power2.out"
-                        });
+                        if (preview) card.onclick = () => play(preview, title, artist, cover);
+                        grid.appendChild(card);
                     });
                 } else {
-                    resultsDiv.innerHTML = '<p class="col-span-full text-center text-text-muted italic py-16">No vibes found matching that description.</p>';
+                    grid.innerHTML = '<div class="empty">No tracks found for this query.</div>';
+                    document.getElementById('results-count').textContent = '';
                 }
-
-            } catch (err) {
-                loadingDiv.classList.add('hidden');
-                console.error(err);
-                resultsDiv.innerHTML = '<p class="col-span-full text-center text-rose-400 py-16">Connection error. Engine offline.</p>';
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results-section').style.display = 'block';
+                document.getElementById('results').innerHTML = '<div class="empty">Connection error.</div>';
             }
         }
 
-        function playTrack(url, title, artist, cover) {
-            const playerBar = document.getElementById('player-bar');
-            const playPauseBtn = document.getElementById('play-pause-btn');
+        function play(url, title, artist, cover) {
+            if (audio) audio.pause();
+            audio = new Audio(url);
 
-            if (currentAudio) {
-                currentAudio.pause();
-            }
-
-            currentAudio = new Audio(url);
-            currentAudio.play();
-
-            document.getElementById('player-title').innerText = title;
-            document.getElementById('player-artist').innerText = artist;
+            document.getElementById('player').classList.add('active');
             document.getElementById('player-img').src = cover;
-            playPauseBtn.innerHTML = '<i class="ph-bold ph-pause text-xl"></i>';
+            document.getElementById('player-title').textContent = title;
+            document.getElementById('player-artist').textContent = artist;
+            document.querySelector('.player-btn').textContent = '⏸';
 
-            playerBar.classList.remove('translate-y-full');
+            audio.play().then(() => {
+                playing = true;
+            }).catch(e => {
+                console.error('Playback failed:', e);
+                document.querySelector('.player-btn').textContent = '▶';
+            });
 
-            currentAudio.onended = () => {
-                playPauseBtn.innerHTML = '<i class="ph-bold ph-play text-xl ml-0.5"></i>';
+            audio.onended = () => {
+                playing = false;
+                document.querySelector('.player-btn').textContent = '▶';
             };
         }
 
         function togglePlay() {
-            if (!currentAudio) return;
-            const playPauseBtn = document.getElementById('play-pause-btn');
-            if (currentAudio.paused) {
-                currentAudio.play();
-                playPauseBtn.innerHTML = '<i class="ph-bold ph-pause text-xl"></i>';
+            if (!audio) return;
+            if (playing) {
+                audio.pause();
+                document.querySelector('.player-btn').textContent = '▶';
             } else {
-                currentAudio.pause();
-                playPauseBtn.innerHTML = '<i class="ph-bold ph-play text-xl ml-0.5"></i>';
+                audio.play();
+                document.querySelector('.player-btn').textContent = '⏸';
             }
+            playing = !playing;
         }
-
-        document.getElementById('query').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') searchMusic();
-        });
-
-        // Page Load Animation
-        gsap.from("header, section", {
-            opacity: 0,
-            y: 20,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: "power2.out"
-        });
     </script>
 </body>
 

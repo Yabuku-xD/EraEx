@@ -88,16 +88,30 @@ class SonicSearch:
         scored_candidates.sort(key=lambda x: x[0], reverse=True)
         
         # Return top N
-        return [
-            {
-                'id': t['id'],
+        import requests
+        results = []
+        for s, t in scored_candidates[:limit]:
+            track_id = t['id']
+            cover_url = ''
+            preview_url = t.get('preview', '')
+            try:
+                r = requests.get(f'https://api.deezer.com/track/{track_id}', timeout=2)
+                if r.status_code == 200:
+                    data = r.json()
+                    cover_url = data.get('album', {}).get('cover_medium', '')
+                    preview_url = data.get('preview', preview_url)
+            except:
+                pass
+            results.append({
+                'id': track_id,
                 'title': t['title'],
-                'artist': t['artist'],
-                'score': float(s), # Cast numpy float to native float
-                'preview': t.get('preview')
-            }
-            for s, t in scored_candidates[:limit]
-        ]
+                'title_short': t.get('title_short', t['title']),
+                'artist': {'name': t['artist']} if isinstance(t['artist'], str) else t['artist'],
+                'album': {'cover_medium': cover_url},
+                'score': float(s),
+                'preview': preview_url
+            })
+        return results
 
     def serendipity_search(self, limit=5):
         """
