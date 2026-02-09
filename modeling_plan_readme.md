@@ -9,10 +9,11 @@ In the crowded music streaming landscape, users struggle to discover music that 
 To predict the relevance of a candidate track $t$ to a user's query $q$ or listening history $h$, such that the top-K recommendations maximize both similarity and "nostalgia fit."
 
 - **Target Variable**: A relevance score $S_{total} \in [0, 1]$ for each track.
-- **Task Type**: Information Retrieval & Recommendation (Hybrid: Content-Based + Collaborative Filtering).
-- **Constraints**: 
-    - **Strict Temporal Filter**: All recommendations must utilize metadata to verify release date is between Jan 1, 2012, and Dec 31, 2018.
-    - **Latency**: Inference must be < 200ms for real-time search.
+-   **Task Type**: Information Retrieval & Recommendation (Hybrid: Content-Based + Collaborative Filtering).
+-   **Key Challenge: The "Metadata Gap"**: 
+    -   *Constraint*: API metadata is often sparse or "noisy" (e.g., a track tagged "Pop" might actually be "Sad Acoustic").
+    -   *Solution*: We cannot rely on text tags alone. We must process raw audio to extracting the "true vibe."
+    -   *Constraint*: **Strict Temporal Filter**: All recommendations must utilize metadata to verify release date is between Jan 1, 2012, and Dec 31, 2018.
 
 ---
 
@@ -21,71 +22,64 @@ To predict the relevance of a candidate track $t$ to a user's query $q$ or liste
 Based on our completed **EDA and Preprocessing (Phase 1)**, we are utilizing the **Deezer API** dataset.
 
 ### Dataset Profile
-- **Source**: Deezer API (Playlist Crawling: "Top 2012" through "Top 2018").
-- **Size**: ~140,000 Tracks (20,000 per year for 7 years).
-- **Key Characteristics**:
-    - **Imbalanced Genres**: Pop/Rock dominate; niche genres (Jazz, Folk) required targeted crawling.
-    - **Missing Audio**: ~15% of tracks lack 30s previews (excluded during preprocessing).
-    - **Noise**: "Remastered 2023" versions of 2012 songs (handled by strict date parsing).
+-   **Source**: Deezer API (Playlist Crawling: "Top 2012" through "Top 2018").
+-   **Size**: ~140,000 Tracks (20,000 per year for 7 years).
+-   **Key Characteristics**:
+    -   **Noisy Tags**: Genre tags are broad ("Alternative" covers both Grunge and Folk). Use Audio Vectors to differentiate.
+    -   **Temporal Noise**: "Remastered 2023" versions of 2012 songs.
+    -   **Cold Start**: 140k tracks have no user interaction history initially.
 
 ### Features Used
-1.  **Audio Features (Content-Based)**:
+1.  **Audio Features (The "Truth")**:
     -   *Source*: 30s MP3 Previews.
-    -   *Engineering*: Mel-Frequency Cepstral Coefficients (MFCCs) and Spectral Contrast extracted via `librosa`.
-    -   *Vectorization*: 128-dimensional dense vector representing "timbre/mood".
-2.  **Semantic Features (Content-Based)**:
-    -   *Source*: Track Title, Artist Name, Album Name.
-    -   *Engineering*: Sentence-BERT (SBERT) embedding.
-    -   *Vectorization*: 384-dimensional dense vector capturing "semantic concept" (e.g., "heartbreak" vs "party").
-3.  **Temporal Features (Hard Filter)**:
-    -   *Source*: `release_date`.
-    -   *Engineering*: Year extraction and range validation (2012 <= Y <= 2018).
+    -   *Engineering*: MFCCs & Spectral Contrast -> 128d Vector.
+    -   *Purpose*: Overcome missing mood tags by analyzing actual timbre.
+2.  **Semantic Features (The "Context")**:
+    -   *Source*: Title/Artist/Album strings.
+    -   *Engineering*: SBERT embedding.
+3.  **Temporal Features (The "Filter")**:
+    -   *Source*: `release_date` (Strict Range Validation).
 
 ---
 
 ## 3. Overall Modeling Strategy and Algorithms 🧠
 
-We propose a **"Two-Tower" Hybrid Strategy** to balance accuracy and discovery.
+We propose a **"Two-Tower" Hybrid Strategy** specifically designed to solve the **Metadata Sparsity** problem.
 
-### Stage 1: Candidate Generation (The "Retrievers")
-We use two retrieval models in parallel:
-1.  **"Sonic" Content-Engine (Vector Search)**:
-    -   **Algorithm**: **Cosine Similarity** (approximated via FAISS for speed).
-    -   **Why?**: Finds songs that *sound* like the query (e.g., "sad acoustic") even if the user has never interacted with them (Cold Start problem solution).
-    -   **Input**: User text query OR Seed Track Vector.
-2.  **Collaborative Filtering (CF)**:
-    -   **Algorithm**: **Alternating Least Squares (ALS)** (Matrix Factorization).
-    -   **Why?**: Captures latent user preferences based on community listening patterns (e.g., "Users who liked Lorde also liked Lana Del Rey").
-    -   **Input**: User-Item Interaction Matrix (Implicit Feedback).
+### Algorithm Selection Rationale
+1.  **Why not just Metadata?**
+    -   Deezer tags are too generic. A user wanting "Dark 2014 Pop" would get "Happy 2014 Pop" if we only filtered by "Pop."
+    -   **Solution**: **Audio Content-Based Filtering (Sonic Engine)**. We analyze the raw waveform to find "darkness" (Spectral Contrast) that metadata misses.
 
-### Stage 2: Filtering (The "Time Machine")
--   **Algorithm**: **Boolean Masking**.
--   **Logic**: `Constraint(track) = (ReleaseDate >= 2012-01-01) AND (ReleaseDate <= 2018-12-31)`.
--   **Why?**: Enforces the business logic of "Nostalgia."
+2.  **Why not just Audio?**
+    -   Audio similarity is subjective. A "Sad Piano" song might sound like a "Calm Piano" song but have very different lyrical meanings.
+    -   **Solution**: **Semantic Vector Search (SBERT)**. We embed the title/artist to capture semantic intent.
 
-### Stage 3: Ranking (The "Merger")
--   **Algorithm**: **Weighted Linear Combination**.
--   **Formula**: $Score = \alpha \cdot Sim_{Audio} + \beta \cdot Sim_{Semantic} + \gamma \cdot Score_{CF}$
--   **Why?**: Allows tuning. For "Search," $\beta$ is high. For "Discover," $\alpha$ (Audio) is high.
+3.  **Why Collaborative Filtering (Als)?**
+    -   Content-based search is "precise" but lacks "surprise." ALS introduces community popularity to surface hits.
+
+### The Hybrid Ranker
+-   **Goal**: robustly score $t$ even if metadata is poor.
+-   **Formula**: $Score = \alpha \cdot Sim_{Audio} (Truth) + \beta \cdot Sim_{Semantic} (Meaning) + \gamma \cdot Score_{CF} (Popularity)$
 
 ---
 
 ## 4. Modeling Execution Timeline (Feb 9 – Feb 23) 📅
 
-### Week 1: Model Implementation (Feb 9 – Feb 15)
+### Week 1: Data Pipeline & Indexing (Feb 9 – Feb 15)
 | Task | Owner | Expected Outcome |
 | :--- | :--- | :--- |
-| **1. Build Sonic Index** | **Shyamalan & Ann** | `sonic_index.pkl`: Crawler (Shyamalan) + Vectors/Filter (Ann). |
-| **2. Implement ALS** | **Shyamalan** | `cf_model.pkl`: Trained Matrix Factorization model on user interactions. |
-| **3. Hybrid Ranker Logic** | **Atul** | Python function `rank_tracks(query, user_id)` that merges (FAISS + SBERT) scores. |
-| **4. Tuning & Validation** | **Shyamalan** | Hyperparameter tuning ($\alpha, \beta$ weights) to maximize perceived relevance. |
+| **1. Data Collection (Crawler)** | **Shyamalan** | `sonic_index.pkl`: Crawler logic, API Integration, Parallel Processing. |
+| **2. Cleaning & EDA** | **Ann** | `eda_report.ipynb`: Genre distribution analysis, Nostalgia Filter validation. |
+| **3. Vector Pipeline (SBERT)** | **Atul** | `semantic.py`: Text embedding pipeline for titles/artists. |
+| **4. Vector Retrieval (FAISS)** | **Atul** | `search_engine.py`: Functional FAISS index for fast similarity search. |
 
 ### Week 2: Evaluation & Presentation (Feb 16 – Feb 23)
 | Task | Owner | Expected Outcome |
 | :--- | :--- | :--- |
-| **5. Evaluation Metrics** | **Atul** | Report on `Precision@10` and `Diversity Score` (genre coverage). |
-| **6. App Integration** | **Ann** | Connect Model pipeline to Flask API (`/recommend` endpoint) & UI. |
-| **7. Slide Deck Prep** | **[Team]** | Final Presentation Draft (Problem -> Data -> Model -> Demo). |
+| **5. Hybrid Search Prototype** | **[Team]** | `hybrid.py`: Merging Audio + Semantic scores (Weighted Sum). |
+| **6. Evaluation & Metrics** | **Atul** | `metrics_report.md`: Precision@10, Diversity analysis. |
+| **7. Slide Deck Prep** | **[Team]** | Final Presentation Draft (Focus on "Metadata Gap" Solution). |
 | **8. Final Rehearsal** | **[Team]** | 10-minute presentation walkthrough. |
 
 ---
@@ -94,7 +88,7 @@ We use two retrieval models in parallel:
 
 | Team Member | Contribution (%) | Responsibilities & Achievements |
 | :--- | :--- | :--- |
-| **Ann** | **33.3%** | - Implemented "Nostalgia Filter" logic (Release Date validation).<br>- Engineered Audio (MFCC) & Semantic (SBERT) vector pipelines.<br>- Planned to optimize crawling with parallel processing (ThreadPoolExecutor). |
-| **Atul** | **33.3%** | - Implementing FAISS-based vector retrieval.<br>- Planned to implement `HybridRanker` logic (Linear Combination of Audio + Semantic scores). |
-| **Shyamalan** | **33.3%** | - Built crawler (Deezer API).<br>- Working on `CollaborativeFiltering` module (ALS Matrix Factorization).<br>- Planned to tune hyperparameters ($\alpha, \beta$) for "Vibe" vs "Accuracy". |
+| **Ann** | **33.3%** | **Data Cleaning & Preprocessing:**<br>- Implemented "Nostalgia Filter" logic (Release Date validation).<br>- Performed EDA on genre distribution and release years.<br>- Cleaned dataset by removing tracks with missing audio previews. |
+| **Atul** | **33.3%** | **Vectorization & Indexing:**<br>- Implemented **SBERT** pipeline for Semantic Embeddings.<br>- Set up **FAISS** index for fast vector retrieval.<br>- Validated vector dimensions (384d) and similarity metrics. |
+| **Shyamalan** | **33.3%** | **Data Collection (Crawler):**<br>- Built `build_sonic_index.ipynb` crawler using Deezer API.<br>- Implemented dynamic genre fetching to ensure diversity.<br>- Handled API rate limits and data serialization (`sonic_index.pkl`). |
 

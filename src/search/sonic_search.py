@@ -1,13 +1,14 @@
 import pickle
 import numpy as np
 import os
+import glob
 import random
 from src.ranking.nostalgia import NostalgiaFilter
 from src.audio.semantic import SemanticEncoder
 
 class SonicSearch:
-    def __init__(self, index_path='data/indices/sonic_index.pkl'):
-        self.index_path = index_path
+    def __init__(self, index_dir='data/indices'):
+        self.index_dir = index_dir
         self.data = []
         self.nostalgia = NostalgiaFilter()
         print("Loading Semantic Encoder for Search...")
@@ -15,18 +16,31 @@ class SonicSearch:
         self.load_index()
 
     def load_index(self):
-        """Loads the list of dicts from pickle."""
-        if os.path.exists(self.index_path):
-            try:
-                with open(self.index_path, 'rb') as f:
-                    self.data = pickle.load(f)
-                print(f"Sonic Index loaded: {len(self.data)} tracks.")
-            except Exception as e:
-                print(f"Error loading index: {e}")
-                self.data = []
-        else:
-            print("Sonic Index not found. Please build it first.")
+        """Loads and merges all sonic_*.pkl files from the index directory."""
+        pattern = os.path.join(self.index_dir, 'sonic_*.pkl')
+        files = glob.glob(pattern)
+        
+        if not files:
+            old_path = os.path.join(self.index_dir, 'sonic_index.pkl')
+            if os.path.exists(old_path):
+                files = [old_path]
+        
+        if not files:
+            print("No Sonic Index files found. Please build them first.")
             self.data = []
+            return
+            
+        for f in sorted(files):
+            try:
+                with open(f, 'rb') as fp:
+                    year_data = pickle.load(fp)
+                    self.data.extend(year_data)
+                    print(f"  Loaded {os.path.basename(f)}: {len(year_data)} tracks")
+            except Exception as e:
+                print(f"  Error loading {f}: {e}")
+        
+        print(f"Sonic Index Total: {len(self.data)} tracks from {len(files)} file(s).")
+
 
     def search_by_text(self, query_text, limit=10):
         """Encodes text query and searches for semantic matches."""
