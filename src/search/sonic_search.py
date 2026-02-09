@@ -46,8 +46,8 @@ class SonicSearch:
         """Encodes text query and searches for semantic matches."""
         target_vec = self.encoder.encode(query_text)
         # We use alpha=0.0 (100% Semantic) for text queries
-        # Unless we later support 'audio query'
-        return self.search_by_vector(target_audio_vec=None, target_semantic_vec=target_vec, limit=limit, alpha=0.0)
+        # But we pass the raw text for Keyword Boosting (Hybrid Search)
+        return self.search_by_vector(target_audio_vec=None, target_semantic_vec=target_vec, limit=limit, alpha=0.0, boost_text=query_text)
 
     def _cosine_similarity(self, vec1, vec2):
         """Compute cosine similarity between two vectors."""
@@ -57,7 +57,7 @@ class SonicSearch:
             return 0.0
         return np.dot(vec1, vec2) / (norm1 * norm2)
 
-    def search_by_vector(self, target_audio_vec, target_semantic_vec, limit=10, alpha=0.5):
+    def search_by_vector(self, target_audio_vec, target_semantic_vec, limit=10, alpha=0.5, boost_text=None):
         """
         Finds nearest neighbors.
         alpha: Weight for Audio (0.0 to 1.0). 1.0 = Audio Only, 0.0 = Semantic Only.
@@ -109,6 +109,25 @@ class SonicSearch:
                 t_score *= temporal_weight
             except:
                 pass
+
+            # 4. Keyword Boosting (Hybrid Search)
+            # If the user typed "PARTYNEXTDOOR", we want to heavily boost tracks
+            # where the Artist Name contains "partynextdoor".
+            # This fixes SBERT drifting to "Party" keyworks generally.
+            if boost_text:
+                q_norm = boost_text.lower()
+                # Check Artist
+                t_artist = track.get('artist', '')
+                if isinstance(t_artist, dict): t_artist = t_artist.get('name', '')
+                t_artist_norm = str(t_artist).lower()
+                
+                if q_norm in t_artist_norm:
+                    t_score += 2.0 # Massive conditional boost for Artist Match
+                
+                # Check Title (smaller boost)
+                t_title_norm = track.get('title', '').lower()
+                if q_norm in t_title_norm:
+                    t_score += 0.5
                 
             scored_candidates.append((t_score, track))
             

@@ -94,27 +94,44 @@ def search():
             # DATE & LANGUAGE FILTER (2012-2018)
             try:
                 # 1. Check Language (Title + Artist)
-                full_text = f"{track['artist']['name']} {track['title']}"
-                try:
-                    lang = detect(full_text)
-                    if lang in ['es', 'fr', 'pt', 'it', 'de', 'ja', 'ko', 'zh', 'ru', 'ar', 'hi', 'tr', 'vi', 'pl', 'nl']:
-                         continue
-                except:
-                    pass
+                # SKIP language check if we are doing a Specific Artist Search (we trust the artist)
+                # This fixes issues where 'PARTYNEXTDOOR' tracks are detected as German/Tagalog/etc.
+                if query_type != 'artist':
+                    full_text = f"{track['artist']['name']} {track['title']}"
+                    try:
+                        lang = detect(full_text)
+                        # Relaxed Filter: Removed 'de' (German), 'it', 'tr', 'vi', etc. as they false-flag English often
+                        # Only filtering major non-English markets that definitely aren't 2012-2018 Western Pop context
+                        if lang in ['es', 'fr', 'pt', 'ja', 'ko', 'zh', 'ru', 'ar', 'hi']:
+                             continue
+                    except:
+                        pass
 
                 # 2. Release Date Check
-                # Deezer Track object usually has 'release_date' if available, or we fetch album
-                # For speed, we skip strict date check on fallback searches or accept '2015' default
-                # But we should try to be accurate if possible.
+                # Deezer Search API doesn't return release_date for tracks usually.
+                # We MUST fetch the album to get the date.
+                # To avoid rate limits, we only do this for the top N potential matches
+                # But we can't sort yet? We have to filter first?
+                # Actually, Deezer Search sorts by rank/relevance.
+                # So we can try to fetch.
                 r_date = track.get('release_date')
                 if not r_date and 'album' in track:
-                    # We skip album fetch for speed in this fallback path
-                    # Just assume it's okay if it's a top result for a specific query
-                    # Or we can strictly require it. Let's be lenient for fallback.
-                    r_date = '2015-01-01' 
+                    try:
+                        # Fetch Album Details
+                        alb_id = track['album']['id']
+                        # Simple cache could go here, but for now just fetch
+                        import requests
+                        alb_res = requests.get(f"https://api.deezer.com/album/{alb_id}", timeout=2).json()
+                        r_date = alb_res.get('release_date')
+                    except:
+                        pass
                 
+                # If we still don't have a date, we SKIP it to be safe (Strict Mode)
+                if not r_date:
+                    continue
+
                 # If we have a date, check era
-                if r_date and not nostalgia.is_in_era(r_date):
+                if not nostalgia.is_in_era(r_date):
                     continue
                     
                 track['release_date'] = r_date
@@ -131,6 +148,28 @@ def search():
     # 1. Primary Search
     # Increase limit to 150 to ensure we find enough matching English tracks from 2012-2018
     filtered_tracks = perform_search_and_filter(search_query, search_type, limit=150)
+
+    # 1b. Sonic Fallback (Safety Net)
+    # If Deezer returned too few results (e.g. mostly new songs filtered out, or rate limits),
+    # we try the Sonic Engine which generally has good 2012-2018 coverage.
+    if len(filtered_tracks) < 5 and sonic_engine:
+        print(f"Low results ({len(filtered_tracks)}). Attempting Sonic Fallback for: {query}")
+        try:
+            sonic_results = sonic_engine.search_by_text(query, limit=20)
+            # Create a set of existing IDs to avoid duplicates
+            existing_ids = set(t['id'] for t in filtered_tracks)
+            
+            for r in sonic_results:
+                if r['id'] not in existing_ids:
+                    # Adapt Sonic result format to Deezer format if needed
+                    # Sonic returns dict with 'title', 'artist', 'album', 'preview', 'id'
+                    # which matches what we need.
+                    # We give them a decent score/rank.
+                    r['score'] = r.get('score', 0.8)
+                    filtered_tracks.append(r)
+                    existing_ids.add(r['id'])
+        except Exception as e:
+            print(f"Sonic Fallback failed: {e}")
 
     # 2. Fallback Logic
     # If NO tracks passed the filter (or 0 raw results), and it was a general search

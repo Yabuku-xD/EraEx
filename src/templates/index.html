@@ -423,13 +423,8 @@
                     const cleanText = (str) => str.replace(/\s*[\(\[]?\s*(feat\.?|featuring|ft\.)\s+[^\)\]]+[\)\]]?$/i, '').trim();
 
                     let filtered = data.results;
-                    if (!isMood) {
-                        const queryLower = q.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        filtered = data.results.filter(t => {
-                            const artistName = (t.artist?.name || t.artist || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                            return artistName.includes(queryLower) || queryLower.includes(artistName);
-                        });
-                    }
+                    // REMOVED: Client-side filtering check. 
+                    // We trust the backend to return relevant results (Semantic or Keyword).
 
                     const seen = new Set();
                     const unique = filtered.filter(t => {
