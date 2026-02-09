@@ -31,24 +31,55 @@ class SemanticEnhancer:
             payload = {
                 "model": self.model,
                 "messages": [
-                    {"role": "system", "content": "You are a music search assistant. Return only valid JSON."},
-                    {"role": "user", "content": f'Analyze: "{user_query}". Return JSON: {{"keywords": ["terms"], "mood": "tone or null", "genre": "genre or null"}}'}
+                    {"role": "system", "content": "You are a music expert. Analyze the user's query to extract search terms, mood, and genre. Return ONLY valid JSON."},
+                    {"role": "user", "content": 'Analyze: "sad midnight drive". Return JSON structure.'},
+                    {"role": "assistant", "content": '{"keywords": ["night", "drive", "lonely"], "mood": "Melancholic", "genre": "Synthwave"}'},
+                    {"role": "user", "content": f'Analyze: "{user_query}". Return JSON structure.'}
                 ],
-                "max_tokens": 200
+
+                "max_tokens": 1024
             }
             
-            response = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+            response = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
             
             if response.status_code == 200:
                 result = response.json()
                 msg = result['choices'][0]['message']
-                content = msg.get('content') or msg.get('reasoning_content', '')
-                content = content.strip()
                 
-                if '{' in content and '}' in content:
-                    start = content.find('{')
-                    end = content.rfind('}') + 1
-                    content = content[start:end]
+                # GLM-4.7 puts reasoning in 'reasoning_content' and final answer in 'content'
+                # If 'content' is empty, it might be in 'reasoning_content' or truncated
+                content = msg.get('content', '')
+                reasoning = msg.get('reasoning_content', '')
+                
+                # If content is empty/short but reasoning has JSON, use reasoning
+                target = content if len(content) > 10 else (reasoning if len(reasoning) > 10 else content)
+                
+                # Debug logging
+                try:
+                    with open('glm_debug.log', 'w', encoding='utf-8') as f:
+                        f.write(f"--- CONTENT ---\n{content}\n\n--- REASONING ---\n{reasoning}")
+                except:
+                    pass
+
+                # Extract JSON from Markdown code blocks if present
+                clean_content = target.strip()
+                if '```' in clean_content:
+                    parts = clean_content.split('```')
+                    for p in parts:
+                        if p.strip().startswith('json'):
+                            clean_content = p.strip()[4:].strip()
+                            break
+                        elif p.strip().startswith('{'):
+                            clean_content = p.strip()
+                            break
+                
+                # Find first { and last }
+                if '{' in clean_content and '}' in clean_content:
+                    start = clean_content.find('{')
+                    end = clean_content.rfind('}') + 1
+                    clean_content = clean_content[start:end]
+                
+                return json.loads(clean_content)
                 
                 if '```' in content:
                     parts = content.split('```')

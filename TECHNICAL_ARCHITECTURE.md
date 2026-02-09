@@ -45,7 +45,7 @@ Here is where the magic happens. All core logic is in `src/`.
 ### A. The Search Engine (`src/search/`)
 *   **[`sonic_search.py`](src/search/sonic_search.py) (The Core Engine)**:
     *   **Purpose**: This is our custom Vector Database implementation.
-    *   **How it works**: It loads the ~24,000 track vectors from disk (`.pkl` files) into memory (RAM). When you search, it performs cosine similarity calculations between your query vector and all 24k tracks in milliseconds.
+    *   **How it works**: It loads the ~24,000 track vectors from disk (`.pkl` files) into memory (RAM). When you search, it performs our proprietary **Era-Weighted Tanimoto Fusion** algorithm (a hybrid of Jaccard similarity and Gaussian temporal decay) to find matches.
     *   **Why custom?**: We needed strict control over the *Release Date* filter (2012-2018) which off-the-shelf vector DBs struggle to combine with vector search efficiently.
 
 *   **[`enhancer.py`](src/search/enhancer.py) (The Reasoning Bridge)**:

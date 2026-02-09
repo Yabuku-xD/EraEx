@@ -70,27 +70,71 @@ class SonicSearch:
             if not self.nostalgia.is_in_era(track.get('release_date')):
                 continue
 
-            score = 0.0
+            # ---------------------------------------------------------
+            # ERA-WEIGHTED TANIMOTO FUSION (Proprietary Algorithm)
+            # ---------------------------------------------------------
+            # Instead of basic Cosine Similarity, we use Tanimoto Coefficient
+            # which is a generalized Jaccard Index for continuous vectors.
+            # Formula: T(A,B) = (A . B) / (||A||^2 + ||B||^2 - A . B)
+            # This penalizes magnitude differences more strictly than Cosine.
+            # ---------------------------------------------------------
+
+            t_score = 0.0
             
-            # Audio Score
-            if target_audio_vec is not None and 'audio_vector' in track:
-                a_score = self._cosine_similarity(target_audio_vec, track['audio_vector'])
-                score += a_score * alpha
-                
-            # Semantic Score
+            # 1. Semantic Tanimoto (The "Meaning")
             if target_semantic_vec is not None and 'semantic_vector' in track:
-                s_score = self._cosine_similarity(target_semantic_vec, track['semantic_vector'])
-                score += s_score * (1 - alpha)
+                v1, v2 = target_semantic_vec, track['semantic_vector']
+                dot = np.dot(v1, v2)
+                mag1 = np.dot(v1, v1)
+                mag2 = np.dot(v2, v2)
+                # Tanimoto Similarity
+                s_sim = dot / (mag1 + mag2 - dot + 1e-9) 
+                t_score += s_sim * (1 - alpha)
                 
-            scored_candidates.append((score, track))
+            # 2. Audio Tanimoto (The "Vibe")
+            if target_audio_vec is not None and 'audio_vector' in track:
+                v1, v2 = target_audio_vec, track['audio_vector']
+                dot = np.dot(v1, v2)
+                mag1 = np.dot(v1, v1)
+                mag2 = np.dot(v2, v2)
+                a_sim = dot / (mag1 + mag2 - dot + 1e-9)
+                t_score += a_sim * alpha
+
+            # 3. Era-Weighted Temporal Decay
+            # We slightly boost tracks from "Peak Era" (2014-2016) or penalize edge years
+            try:
+                track_year = int(track.get('release_date', '2015')[:4])
+                # Gaussian decay from 2016 (Peak Nostalgia)
+                temporal_weight = 1.0 + 0.1 * np.exp(-0.5 * ((track_year - 2016)**2))
+                t_score *= temporal_weight
+            except:
+                pass
+                
+            scored_candidates.append((t_score, track))
             
         # Sort desc
         scored_candidates.sort(key=lambda x: x[0], reverse=True)
         
-        # Return top N
+        # Deduplication & Fetching
         import requests
         results = []
-        for s, t in scored_candidates[:limit]:
+        seen_keys = set()
+        
+        # We iterate through more candidates to fill the limit after dedup
+        for s, t in scored_candidates:
+            if len(results) >= limit:
+                break
+                
+            # Create a dedup key (Title + Artist)
+            # Normalize: lowercase, remove punctuation
+            title_norm = ''.join(c for c in t.get('title', '').lower() if c.isalnum())
+            artist_norm = ''.join(c for c in t.get('artist', '').lower() if c.isalnum())
+            dedup_key = f"{title_norm}_{artist_norm}"
+            
+            if dedup_key in seen_keys:
+                continue
+            seen_keys.add(dedup_key)
+
             track_id = t['id']
             cover_url = ''
             preview_url = t.get('preview', '')

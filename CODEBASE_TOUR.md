@@ -42,8 +42,8 @@ These files power the actual application when you run the server.
 *   **What it does:** Acts as our custom In-Memory Database and Search Engine.
 *   **How it works:**
     1.  **Initialization:** On startup, it reads all the `.pkl` files created in Phase 1 and loads ~24,000 tracks into RAM.
-    2.  **Search:** When given a query vector, it calculates the **Cosine Similarity** between that vector and every single track in the index.
-    3.  **Sort & Return:** It returns the top N closest matches. It also handles fetching fresh Album Art URLs from Deezer API on the fly if needed.
+    2.  **Search:** When given a query vector, it calculates the **Era-Weighted Tanimoto Fusion Score** between that vector and every single track. This proprietary algorithm combines semantic meaning, audio features, and temporal nostalgia.
+    3.  **Sort & Return:** It returns the top N **unique** matches (deduplicated by title/artist). It also handles fetching fresh Album Art URLs from Deezer API on the fly if needed.
 
 ### 5. `src/search/enhancer.py` (The Reasoning Bridge)
 *   **What it does:** Integrates the Z.AI GLM-4.7 Large Language Model.
