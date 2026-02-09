@@ -43,21 +43,21 @@ graph TD
 Here is where the magic happens. All core logic is in `src/`.
 
 ### A. The Search Engine (`src/search/`)
-*   **`sonic_search.py` (The Core Engine)**:
+*   **[`sonic_search.py`](src/search/sonic_search.py) (The Core Engine)**:
     *   **Purpose**: This is our custom Vector Database implementation.
     *   **How it works**: It loads the ~24,000 track vectors from disk (`.pkl` files) into memory (RAM). When you search, it performs cosine similarity calculations between your query vector and all 24k tracks in milliseconds.
     *   **Why custom?**: We needed strict control over the *Release Date* filter (2012-2018) which off-the-shelf vector DBs struggle to combine with vector search efficiently.
 
-*   **`enhancer.py` (The Reasoning Bridge)**:
+*   **[`enhancer.py`](src/search/enhancer.py) (The Reasoning Bridge)**:
     *   **Purpose**: The interface to Z.AI's GLM-4.7 model.
     *   **Logic**: It constructs a rigorous prompt ("You are a music expert...") to force the LLM to output structured JSON instead of chatty text. It handles the "Reasoning" step.
 
 ### B. The Feature Engineering (`src/audio/`)
-*   **`semantic.py` (The Text Encoder)**:
+*   **[`semantic.py`](src/audio/semantic.py) (The Text Encoder)**:
     *   **Technique**: Uses `all-MiniLM-L6-v2` (Sentence-BERT).
     *   **Function**: Converts text like "Sad songs about rain" into a 384-dimensional vector of numbers. This allows us to match "Sad" with "Melancholy" mathematically.
 
-*   **`processor.py` (The Audio Analyzer)**:
+*   **[`processor.py`](src/audio/processor.py) (The Audio Analyzer)**:
     *   **Technique**: Uses `librosa` to analyze MP3 waveforms.
     *   **Function**: Extracts **MFCCs** (Timbre/Texture) and **Spectral Contrast**. This powers the "Serendipity" mode (finding songs that *sound* similar even if they have different genres).
 
