@@ -1,28 +1,42 @@
 # EraEx
 
-EraEx is a music discovery and recommendation app built around:
+EraEx is a Flask-based music discovery app with semantic search, adaptive recommendations, profile-driven playlists, and a web player with YouTube/Spotify fallback support.
 
-1. Semantic search with `BAAI/bge-m3` + FAISS.
-2. DPP-based cold start and adaptive recommendations.
-3. YouTube playback with automatic fallback video resolution via `yt-dlp`.
+## Screenshots
 
-## Setup
+### Home
+![EraEx Home](assets/home.png)
 
-### Option A: No Virtual Environment
+### Search
+![EraEx Search](assets/search.png)
 
-Install dependencies globally if your Python setup allows it, then make sure `yt-dlp` is on `PATH`.
+### For You
+![EraEx For You](assets/foryou.png)
 
-Windows `yt-dlp` from GitHub:
+### Liked
+![EraEx Liked](assets/liked.png)
 
-1. Download `yt-dlp.exe` from `https://github.com/yt-dlp/yt-dlp/releases/latest`
-2. Place it in a folder already in `PATH`, or add its folder to `PATH`
-3. Verify with:
+### History
+![EraEx History](assets/history.png)
 
-```powershell
-yt-dlp --version
-```
+### Playlists
+![EraEx Playlists](assets/playlists.png)
 
-### Option B: Virtual Environment
+## What Is In The Codebase
+
+- Flask web app with server-rendered templates and modular static JS/CSS.
+- Semantic retrieval pipeline in `src/search/search_pipeline.py` using `BAAI/bge-m3` + FAISS.
+- Recommendation engine in `src/recommendation/recommendation_engine.py` with cold-start and adaptive profile modes.
+- User/account/profile storage in SQLite via `src/user_profiles/user_profile_store.py`.
+- Media enrichment/resolution in `src/core/media_metadata.py` (yt-dlp fallback, thumbnail candidates, optional Spotify cover resolution).
+- Optional lyrics fetch pipeline (`/api/lyrics`) with caching and Lyrica/LrcLib fallbacks.
+
+## Prerequisites
+
+- Python 3.10+ recommended.
+- `yt-dlp` available (package is pinned in `requirements.txt`; system binary fallback is also supported).
+
+## Install
 
 ### Windows PowerShell
 
@@ -33,14 +47,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-If activation is blocked:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
-```
-
-### Git Bash / WSL / Linux / macOS
+### Bash / WSL / Linux / macOS
 
 ```bash
 python -m venv .venv
@@ -49,46 +56,102 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### If You Are in PowerShell
+## Required Local Data
 
-Do not use `source` or `src`. Use:
+Search/recommendation runtime expects index artifacts under `data/indexes`:
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+- `faiss_index.bin` or `faiss.index`
+- `id_map.json` or `track_ids.pkl`
+- `metadata.json`
 
-## Run
+You can rebuild artifacts with `notebooks/full_pipeline.ipynb`.
+
+## Run The App
 
 ```bash
 python run.py
 ```
 
-Open `http://localhost:5000`.
+Open `http://127.0.0.1:5000` (or `http://localhost:5000`).
 
-## Maintenance Commands
+## CLI Tools
 
-1. One-shot full rebuild (metadata + id_map + embeddings + FAISS): `notebooks/full_pipeline.ipynb`
-2. Enrich metadata with yt-dlp (description + instrumental): `python cli_tools/project_maintenance_cli.py enrich --only-missing --limit 1000`
-3. Extract audio feature cache: `python cli_tools/project_maintenance_cli.py audio-features`
-4. Run recommendation simulation: `python cli_tools/project_maintenance_cli.py simulate`
-5. Run subset pipeline smoke test: `python cli_tools/project_maintenance_cli.py subset-test --subset-size 5`
-6. Remove temp/unused local artifacts: `python cli_tools/project_maintenance_cli.py clean`
+### Search Query CLI
 
-## Key API Endpoints
+```bash
+python -m cli_tools.search_query_cli "midnight drive rnb trap" --limit 10
+python -m cli_tools.search_query_cli --artist "Miguel" --song "coffee"
+```
 
-1. `GET /search?q=...&limit=...`
-2. `GET /sonic?q=...&limit=...`
-3. `GET /api/recommend?user_id=...&n=10`
-4. `GET /api/trending?n=10`
-5. `GET /api/resolve_video?title=...&artist=...&track_id=...`
-6. `GET /api/track_enrich?track_id=...&title=...&artist=...`
-7. `POST /api/like`
-8. `POST /api/play`
-9. `POST /api/unlike`
+### For You Recommendation CLI
 
-## Notes
+```bash
+python -m cli_tools.foryou_recommendation_cli --user-id <USER_ID>
+python -m cli_tools.foryou_recommendation_cli --username <USERNAME> --password <PASSWORD> --fast
+```
 
-1. `requirements.txt` pins `yt-dlp` directly from GitHub.
-2. If metadata has empty `cover_url`, the app falls back to YouTube thumbnails.
-3. If a returned `video_id` fails in the player, frontend retries using `/api/resolve_video`.
-4. Description + instrumental/non-instrumental are supported via metadata fields and `/api/track_enrich`.
+### Search Tuning CLI
+
+```bash
+python -m cli_tools.search_tuning_cli queries.json --trials 60 --report-json tuning_report.json
+python -m cli_tools.search_tuning_cli --template-out queries_template.json dummy.json
+```
+
+### Maintenance CLI
+
+```bash
+python cli_tools/project_maintenance_cli.py enrich --only-missing --limit 1000
+python cli_tools/project_maintenance_cli.py audio-features
+python cli_tools/project_maintenance_cli.py simulate
+python cli_tools/project_maintenance_cli.py subset-test --subset-size 5
+python cli_tools/project_maintenance_cli.py clean --dry-run
+```
+
+## API Surface (Main Routes)
+
+- `GET /search`
+- `GET /sonic`
+- `GET /api/recommend`
+- `GET /api/trending`
+- `GET /api/resolve_video`
+- `GET /api/track_enrich`
+- `GET /api/lyrics`
+- `POST /api/like`
+- `POST /api/unlike`
+- `POST /api/dislike`
+- `POST /api/undislike`
+- `POST /api/play`
+- `POST /api/skip`
+- `GET /api/liked`
+- `GET /api/history`
+- `GET /api/playlists` and playlist mutation routes under `/api/playlists/*`
+- Auth routes under `/api/auth/*`
+- Spotify integration routes under `/api/spotify/*` plus `/spotify/callback`
+
+## Key Environment Variables
+
+- `EMBEDDING_MODEL` (default `BAAI/bge-m3`)
+- `FLASK_SECRET_KEY`
+- `SESSION_COOKIE_SECURE`
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
+- `SPOTIFY_PLAYBACK_ENABLED`, `SPOTIFY_REDIRECT_URI`
+- `LYRICA_BASE_URL` (optional sidecar service)
+- `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` (for notebook/model workflows that require gated Hugging Face access)
+
+## Project Layout
+
+```text
+EraEx/
+  assets/                      # README screenshots
+  cli_tools/                   # search, recommendation, tuning, maintenance CLIs
+  config/settings.py           # global runtime settings
+  notebooks/                   # full pipeline and analysis notebooks
+  src/
+    core/                      # embeddings, media metadata, lazy loading, audio features
+    search/                    # semantic retrieval + ranking pipeline
+    recommendation/            # recommendation engine
+    user_profiles/             # SQLite-backed profile/account storage
+    web_api/                   # Flask app and routes
+    templates/ + static/       # frontend UI
+  run.py                       # startup + warmup entrypoint
+```
