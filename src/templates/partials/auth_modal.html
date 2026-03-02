@@ -1,0 +1,58 @@
+<div id="auth-modal" class="auth-modal-shell" aria-hidden="true">
+    <div class="auth-modal-backdrop" data-auth-modal-close></div>
+    <section class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="auth-modal-header">
+            <div>
+                <h3 id="auth-modal-title">Account</h3>
+                <p id="auth-modal-subtitle">Login or create an account to keep your profile data permanent.</p>
+            </div>
+            <button id="auth-modal-close" class="icon-btn auth-modal-close" type="button" aria-label="Close account dialog">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+
+        <div id="auth-modal-status" class="status-msg" aria-live="polite"></div>
+
+        <div id="auth-session-view" class="auth-session-view" hidden>
+            <div class="auth-profile-card">
+                <div class="auth-profile-media">
+                    <img id="auth-profile-banner" class="auth-profile-banner" src="" alt="Profile banner" hidden>
+                    <div class="auth-profile-avatar-shell">
+                        <img id="auth-profile-avatar" class="auth-profile-avatar" src="https://i.pravatar.cc/300?img=32" alt="Profile photo">
+                    </div>
+                    <div class="auth-profile-actions">
+                        <button id="auth-change-banner-btn" class="auth-banner-change-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+                            Change Banner
+                        </button>
+                        <button id="auth-change-avatar-btn" class="auth-banner-change-btn auth-photo-change-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+                            Change Photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-session-row">
+                <div class="auth-session-pill">
+                    <div class="auth-session-label">Signed in as</div>
+                    <div id="auth-session-username" class="auth-session-username">User</div>
+                    <div id="auth-session-userid" class="auth-session-userid"></div>
+                </div>
+                <button id="auth-logout-btn" class="landing-chip" type="button">Logout</button>
+            </div>
+            <input id="auth-avatar-input" type="file" accept="image/*" hidden>
+            <input id="auth-banner-input" type="file" accept="image/*" hidden>
+        </div>
+
+        <form id="auth-form" class="auth-form" autocomplete="off">
+            <label for="auth-username" class="sr-only">Username</label>
+            <input id="auth-username" class="playlist-name-input auth-input" type="text" maxlength="32" placeholder="Username (letters, numbers, _, -, .)">
+            <label for="auth-password" class="sr-only">Password</label>
+            <input id="auth-password" class="playlist-name-input auth-input" type="password" maxlength="160" placeholder="Password">
+            <div class="auth-actions">
+                <button id="auth-login-btn" class="landing-chip" type="button">Login</button>
+                <button id="auth-register-btn" class="landing-chip" type="button">Create Account</button>
+            </div>
+        </form>
+    </section>
+</div>

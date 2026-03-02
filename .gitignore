@@ -1,0 +1,9 @@
+/data/*
+__pycache__/
+*.pyc
+.vscode/
+.venv/
+.env
+data.zip
+/Lyrica/
+!/data/users.db

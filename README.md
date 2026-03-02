@@ -1,48 +1,94 @@
-# EraEx - The 2012-2018 Nostalgia Machine 📼
+# EraEx
 
-A retro-styled music discovery engine that takes you back to the golden era of streaming. Powered by **GLM-4.7 Semantic Reasoning** and a custom **Sonic Vector Index**.
+EraEx is a music discovery and recommendation app built around:
 
-## 🚀 How to Run
+1. Semantic search with `BAAI/bge-m3` + FAISS.
+2. DPP-based cold start and adaptive recommendations.
+3. YouTube playback with automatic fallback video resolution via `yt-dlp`.
 
-### 1. Setup
-Install requirements:
-```bash
+## Setup
+
+### Option A: No Virtual Environment
+
+Install dependencies globally if your Python setup allows it, then make sure `yt-dlp` is on `PATH`.
+
+Windows `yt-dlp` from GitHub:
+
+1. Download `yt-dlp.exe` from `https://github.com/yt-dlp/yt-dlp/releases/latest`
+2. Place it in a folder already in `PATH`, or add its folder to `PATH`
+3. Verify with:
+
+```powershell
+yt-dlp --version
+```
+
+### Option B: Virtual Environment
+
+### Windows PowerShell
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Create a `.env` file with your API keys (GLM_API_KEY, etc.).
+If activation is blocked:
 
-### 2. Start the App
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### Git Bash / WSL / Linux / macOS
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### If You Are in PowerShell
+
+Do not use `source` or `src`. Use:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+## Run
+
 ```bash
 python run.py
 ```
-**Open your browser to:** [http://localhost:5000](http://localhost:5000)
 
-## ✨ Core Features (Methodology)
+Open `http://localhost:5000`.
 
-### 🧠 Semantic Search 2.0
--   **GLM-4.7 Integration**: Uses a Large Language Model to understand complex queries like "sad midnight drive" -> interpreting it as "Melancholic, Synthwave, Nocturnal".
--   **Hybrid Retrieval**: Combines semantic understanding with strict keyword filtering.
+## Maintenance Commands
 
-### 🛡️ The Nostalgia Filter
--   **Strict Temporal Validaton**: Every single track is verified against Deezer's database to ensure it was released strictly between **2012-01-01** and **2018-12-31**.
--   **No Leakage**: "Remastered 2023" compilation tracks are strictly stripped out.
+1. One-shot full rebuild (metadata + id_map + embeddings + FAISS): `notebooks/full_pipeline.ipynb`
+2. Enrich metadata with yt-dlp (description + instrumental): `python cli_tools/project_maintenance_cli.py enrich --only-missing --limit 1000`
+3. Extract audio feature cache: `python cli_tools/project_maintenance_cli.py audio-features`
+4. Run recommendation simulation: `python cli_tools/project_maintenance_cli.py simulate`
+5. Run subset pipeline smoke test: `python cli_tools/project_maintenance_cli.py subset-test --subset-size 5`
+6. Remove temp/unused local artifacts: `python cli_tools/project_maintenance_cli.py clean`
 
-### 🎧 Sonic Indexing
--   **24k+ Track Dataset**: A pre-computed vector index of the era's music.
--   **Audio Fingerprinting**: Uses SBERT and Librosa to match songs by *vibe*, not just text.
+## Key API Endpoints
 
-### 🎨 Retro UI
--   **Aesthetic**: Frutiger Aero / Vaporwave design language.
--   **Interactive Player**: Integrated Deezer 30s previews with dynamic album art visualization.
+1. `GET /search?q=...&limit=...`
+2. `GET /sonic?q=...&limit=...`
+3. `GET /api/recommend?user_id=...&n=10`
+4. `GET /api/trending?n=10`
+5. `GET /api/resolve_video?title=...&artist=...&track_id=...`
+6. `GET /api/track_enrich?track_id=...&title=...&artist=...`
+7. `POST /api/like`
+8. `POST /api/play`
+9. `POST /api/unlike`
 
-## 💻 Tech Stack
--   **AI/ML**: Z.AI GLM-4.7 (Reasoning), SBERT (Embeddings), Librosa (Audio Analysis)
--   **Backend**: Flask, Deezer API (Metadata), NumPy (Vector Ops)
--   **Frontend**: HTML5, CSS3 (Glassmorphism), Vanilla JS
--   **Data**: Pickle-based Vector Index (L2 Cache), Browser Caching (L3)
+## Notes
 
-## 📊 Dataset & Modeling
-For detailed methodology, see:
--   [Dataset & Methodology](dataset_and_methodology.md) - Full breakdown of the 24k track index and filtering logic.
--   [Modeling Plan](modeling_plan_readme.md) - Deep dive into the GLM-Sonic hybrid architecture.
+1. `requirements.txt` pins `yt-dlp` directly from GitHub.
+2. If metadata has empty `cover_url`, the app falls back to YouTube thumbnails.
+3. If a returned `video_id` fails in the player, frontend retries using `/api/resolve_video`.
+4. Description + instrumental/non-instrumental are supported via metadata fields and `/api/track_enrich`.

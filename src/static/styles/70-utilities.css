@@ -1,0 +1,198 @@
+/* Skeletons & Utilities */
+.skeleton-card {
+    background: #eee;
+    border-radius: var(--radius-md);
+    height: 60px;
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 0%, #ffffff 50%, #f0f0f0 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    from {
+        background-position: 200% 0;
+    }
+
+    to {
+        background-position: -200% 0;
+    }
+}
+
+.status-msg {
+    font-size: 0.85rem;
+    color: var(--text-secondary-dark);
+    min-height: 20px;
+    transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.status-msg:empty {
+    min-height: 0;
+    display: none;
+}
+
+.status-msg.error {
+    color: #ff5f56;
+}
+
+.search-pager {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.search-page-label {
+    min-width: 96px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-secondary-dark);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.pager-btn {
+    min-width: 88px;
+    height: 34px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    color: var(--text-primary-dark);
+    padding: 0 14px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: all 0.18s ease;
+}
+
+.pager-btn:hover:not(:disabled) {
+    border-color: #d8d8d8;
+    background: #fafafa;
+    transform: translateY(-1px);
+}
+
+.pager-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.pager-btn:disabled {
+    cursor: default;
+    color: #b3b3b3;
+    background: #f7f7f7;
+    border-color: #ececec;
+    box-shadow: none;
+}
+
+#search-next-btn:not(:disabled),
+#home-queue-next-btn:not(:disabled) {
+    border-color: rgba(216, 104, 49, 0.25);
+}
+
+.settings-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-width: 190px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1600;
+}
+
+.settings-menu-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-primary-dark);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.settings-menu-link:hover {
+    background: rgba(216, 104, 49, 0.08);
+    color: rgba(216, 104, 49, 1);
+}
+
+.settings-menu-arrow {
+    font-size: 0.94rem;
+    color: var(--text-secondary-dark);
+    line-height: 1;
+}
+
+.settings-menu-version {
+    margin-top: 2px;
+    padding: 8px 12px 4px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 0.76rem;
+    color: var(--text-secondary-dark);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* Tooltips */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background: #222;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 1000;
+    font-family: var(--font-body);
+}
+
+[data-tooltip]::after {
+    content: '';
+    position: absolute;
+    bottom: 105%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #222 transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}

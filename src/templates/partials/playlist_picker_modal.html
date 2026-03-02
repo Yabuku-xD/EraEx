@@ -1,0 +1,20 @@
+    <div id="playlist-picker-modal" class="playlist-modal-shell" aria-hidden="true">
+        <div class="playlist-modal-backdrop" data-playlist-modal-close></div>
+        <section class="playlist-modal-card" role="dialog" aria-modal="true" aria-labelledby="playlist-picker-title">
+            <div class="playlist-modal-header">
+                <div>
+                    <h3 id="playlist-picker-title">Add To Playlist</h3>
+                    <p id="playlist-picker-subtitle">Choose an existing playlist or create a new one.</p>
+                </div>
+                <button id="playlist-picker-close" class="icon-btn playlist-modal-close" type="button" aria-label="Close add to playlist dialog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <div id="playlist-picker-status" class="status-msg" aria-live="polite"></div>
+            <div class="playlist-create-row">
+                <input id="playlist-picker-name" class="playlist-name-input" type="text" maxlength="80" placeholder="Create a playlist">
+                <button id="playlist-picker-create-btn" class="landing-chip" type="button">Create</button>
+            </div>
+            <div id="playlist-picker-list" class="playlist-picker-list" role="list"></div>
+        </section>
+    </div>

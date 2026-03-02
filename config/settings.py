@@ -1,0 +1,190 @@
+import os
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+try:
+    from dotenv import load_dotenv
+except ImportError:  # Optional in minimal environments.
+    # Lightweight fallback parser for local `.env` files when python-dotenv is unavailable.
+    def load_dotenv(dotenv_path=None, *args, **kwargs):
+        """
+        Load dotenv.
+        
+        This function implements the load dotenv step for this module.
+        It is used to keep the broader workflow readable and easier to maintain.
+        """
+        path = Path(dotenv_path) if dotenv_path else (BASE_DIR / ".env")
+        try:
+            if not path.exists():
+                return False
+            for raw_line in path.read_text(encoding="utf-8").splitlines():
+                line = str(raw_line or "").strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                if not key:
+                    continue
+                value = value.strip()
+                if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+                    value = value[1:-1]
+                os.environ.setdefault(key, value)
+            return True
+        except Exception:
+            return False
+
+load_dotenv(BASE_DIR / ".env")
+DATA_DIR = BASE_DIR / "data"
+CLEAN_DATA_FILE = DATA_DIR / "Final_Dataset.parquet"
+INDEX_DIR = DATA_DIR / "indexes"
+KG_DIR = DATA_DIR / "kg"
+CACHE_DIR = DATA_DIR / "cache"
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
+EMBEDDING_DIM = 1024
+YEAR_RANGE = range(2010, 2025)
+SEARCH_ERA_RANGE = range(2012, 2019)
+BLOCKED_GENRES = {
+    "Latin Music",
+    "Musica Mexicana",
+    "Traditional Mexicano",
+    "Reggaeton",
+    "K-Pop",
+    "J-Pop",
+    "Asian Music",
+    "African Music",
+    "Brazilian Music",
+    "French Chanson",
+    "Schlager",
+    "German Pop",
+    "Spanish Pop",
+    "Indian Music",
+    "Arabic Music",
+    "Bollywood",
+    "C-Pop",
+    "Salsa",
+    "Bachata",
+    "Tango",
+    "Flamenco",
+}
+SEARCH_WEIGHTS = {"alpha": 0.6, "beta": 0.3, "gamma": 0.1}
+SEARCH_NON_LIKE_WEIGHTS = {
+    "semantic": 0.22,
+    "tag_overlap": 0.14,
+    "popularity": 0.04,
+    "facet": 0.34,
+    "description": 0.26,
+    "audio": 0.14,
+    "title_penalty": 0.12,
+    "year_bonus": 0.06,
+}
+SEARCH_LIKE_WEIGHTS = {
+    "semantic": 0.42,
+    "overlap": 0.13,
+    "popularity": 0.05,
+    "facet": 0.30,
+    "artist": 0.10,
+    "audio": 0.06,
+}
+SEARCH_FACET_WEIGHTS = {"genre": 0.40, "vibe": 0.35, "mood": 0.25}
+SEARCH_BASE_FETCH_MULTIPLIER = 4
+SEARCH_FACET_FETCH_MULTIPLIER = 70
+SEARCH_FACET_FETCH_MIN = 1800
+SEARCH_STRICT_ARTIST_FETCH_MULTIPLIER = 120
+SEARCH_STRICT_ARTIST_FETCH_MIN = 2400
+SEARCH_FACET_SEMANTIC_SCALE = 0.58
+SEARCH_FACET_CONTEXT_BOOST = 1.35
+SEARCH_FACET_TITLE_PENALTY_BOOST = 1.55
+SEARCH_FACET_CONTEXT_MIN_SUPPORT = 0.18
+SEARCH_FACET_ALIGNMENT_MIN = 0.20
+SEARCH_FACET_ALIGNMENT_BOOST = 0.22
+SEARCH_FACET_ALIGNMENT_PENALTY = 0.26
+SEARCH_FACET_TOKEN_COVERAGE_MIN = 0.15
+SEARCH_FACET_HARD_TOKEN_COVERAGE_MIN = 0.14
+SEARCH_FACET_TOKEN_COVERAGE_BOOST = 0.28
+SEARCH_FACET_HARD_TOKEN_PENALTY = 0.22
+SEARCH_FACET_SOFT_TOKEN_COVERAGE_MIN = 0.20
+SEARCH_FACET_SOFT_TOKEN_COVERAGE_BOOST = 0.16
+SEARCH_FACET_SOFT_TOKEN_PENALTY = 0.14
+SEARCH_FACET_SOFT_AUDIO_BYPASS_MIN = 0.92
+SEARCH_SOFT_FOCUS_MAX_DF = 0.02
+SEARCH_SOFT_FOCUS_BOOST = 0.22
+SEARCH_SOFT_FOCUS_PENALTY = 0.16
+SEARCH_HARD_FOCUS_MAX_DF = 0.06
+SEARCH_HARD_FOCUS_BOOST = 0.24
+SEARCH_HARD_FOCUS_PENALTY = 0.20
+SEARCH_UNION_FACET_TITLE_ARTIST_CANDIDATES_MAX = 900
+SEARCH_UNION_FACET_TITLE_ARTIST_HARD_MIN = 0.12
+SEARCH_UNION_FACET_TITLE_ARTIST_MIXED_MIN = 0.08
+SEARCH_UNION_MIXED_HARD_TOKEN_MAX = 2
+SEARCH_UNION_MIXED_SOFT_TOKEN_MAX = 2
+SEARCH_MIXED_HARD_COVERAGE_PENALTY = 0.20
+SEARCH_MIXED_SOFT_COVERAGE_PENALTY = 0.45
+SEARCH_MIXED_SOFT_FOCUS_PENALTY = 0.50
+SEARCH_MIXED_HARD_FOCUS_PENALTY = 0.18
+SEARCH_MIXED_HARD_FOCUS_BOOST = 0.12
+SEARCH_MIXED_HARD_FOCUS_MISS_PENALTY = 0.10
+SEARCH_MIXED_SOFT_CONTEXT_SCALE = 0.45
+SEARCH_MIXED_SOFT_EXPANDED_SCALE = 0.55
+SEARCH_MIXED_SOFT_CONTEXT_EXPANDED_SCALE = 0.50
+SEARCH_MIXED_SOFT_FOCUS_WITHOUT_HARD_SCALE = 0.55
+SEARCH_MIXED_HARD_SIGNAL_FOCUS_WEIGHT = 0.20
+SEARCH_MIXED_HARD_SIGNAL_COVERAGE_WEIGHT = 0.80
+SEARCH_MIXED_SOFT_WITHOUT_HARD_PENALTY = 0.16
+SEARCH_MIXED_HARD_ONLY_SOFT_MIN = 0.18
+SEARCH_MIXED_HARD_ONLY_PENALTY = 0.24
+SEARCH_MIXED_AUDIO_GATE_PENALTY = 0.18
+SEARCH_MIXED_INTENT_COVERAGE_MIN = 0.12
+SEARCH_MIXED_INTENT_COVERAGE_BOOST = 0.22
+SEARCH_MIXED_INTENT_COVERAGE_PENALTY = 0.75
+SEARCH_MIXED_TOPK_QUOTA_ENABLED = True
+SEARCH_MIXED_TOPK_QUOTA_K = 10
+SEARCH_MIXED_TOPK_QUOTA_MIN_HITS = 4
+SEARCH_MIXED_TOPK_QUOTA_MIN_COVERAGE = 0.25
+SEARCH_MIXED_QUERYFIT_RESORT_K = 20
+SEARCH_MIXED_QUERYFIT_MIN_COVERAGE = 0.25
+SEARCH_MIXED_QUERYFIT_SORT_QUERYFIT_WEIGHT = 0.72
+SEARCH_MIXED_QUERYFIT_SORT_COVERAGE_WEIGHT = 0.18
+SEARCH_MIXED_QUERYFIT_SORT_HARD_FACET_WEIGHT = 0.08
+SEARCH_MIXED_QUERYFIT_SORT_HARD_FOCUS_WEIGHT = 0.02
+SEARCH_MIXED_QUERYFIT_HARD_FOCUS_QF_MIN = 0.50
+SEARCH_MIXED_QF_HARD_FOCUS_BOOST = 0.05
+SEARCH_MIXED_QF_NO_HARD_PENALTY = 0.018
+SEARCH_MIXED_QF_SOFT_WITHOUT_HARD_PENALTY = 0.025
+SEARCH_MIXED_QF_MIXED_COVERAGE_BOOST = 0.01
+SEARCH_MIXED_DESC_TRUSTED_SCALE = 1.0
+SEARCH_MIXED_DESC_UNTRUSTED_SCALE = 0.08
+SEARCH_FACET_AUDIO_MIN = 0.76
+SEARCH_FACET_AUDIO_BOOST = 0.24
+SEARCH_BOT_MIN_CONFIDENCE = 0.24
+SEARCH_METRIC_GENRE_HIT_THRESHOLD = 0.10
+SEARCH_METRIC_FACET_HIT_THRESHOLD = 0.15
+SEARCH_METRIC_MIXED_INTENT_HIT_THRESHOLD = 0.25
+SEARCH_INSTRUMENTAL_WEIGHTS = {
+    "match_boost": 0.12,
+    "mismatch_penalty": 0.18,
+    "unknown_penalty": 0.04,
+    "confidence_floor": 0.35,
+}
+SEARCH_LIKE_EXCLUDE_ANCHOR_ARTIST = True
+SEARCH_CACHE_RESULTS_MAX = 256
+SEARCH_CACHE_QUERY_VECS_MAX = 384
+SEARCH_CACHE_FAISS_MAX = 384
+SEARCH_CACHE_TRACK_FEATURES_MAX = 80000
+SEARCH_USE_CANDIDATE_UNION = True
+SEARCH_UNION_MAX_CANDIDATES = 5000
+SEARCH_UNION_EXTRA_FETCH_K = 900
+SEARCH_UNION_ARTIST_CANDIDATES_MAX = 800
+SEARCH_UNION_ANCHOR_CANDIDATES_MAX = 900
+SEARCH_USE_MMR_DIVERSIFY = True
+SEARCH_MMR_DIVERSIFY_POOL = 80
+SEARCH_MMR_LAMBDA = 0.78
+SEARCH_MMR_MIN_QUERY_TOKENS = 2
+SEARCH_DYNAMIC_WEIGHTS = True
+SEARCH_HPARAMS_PATH = INDEX_DIR / "search_hparams.json"
+SEARCH_HPARAMS_RELOAD_SEC = 5.0
+USERS_DB_PATH = DATA_DIR / "users.db"
+API_CACHE_DB_PATH = CACHE_DIR / "api_cache.db"
+TRACK_DESCRIPTION_MAX_CHARS = 280
+YTDLP_SOCKET_TIMEOUT_SEC = 8
+YTDLP_METADATA_TIMEOUT_SEC = 12
+KGE_DIM = 128
+MOCK_MODE = False

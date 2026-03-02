@@ -1,0 +1,120 @@
+/* 1. LEFT SIDEBAR */
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-sidebar);
+    color: var(--text-primary-light);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+    flex-shrink: 0;
+    transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 320ms ease, box-shadow 420ms ease;
+    will-change: transform, opacity;
+}
+
+.sidebar-top {
+    margin-bottom: 40px;
+    padding-left: 8px;
+    transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1), opacity 280ms ease;
+}
+
+.window-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dot.close {
+    background: #ff5f56;
+}
+
+.dot.min {
+    background: #ffbd2e;
+}
+
+.dot.max {
+    background: #27c93f;
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-heading {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary-light);
+    margin-bottom: 8px;
+    padding-left: 12px;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-secondary-light);
+    font-size: 0.95rem;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    transition: all 0.2s;
+}
+
+.nav-heading,
+.nav-item {
+    transition-property: color, background-color, transform, opacity;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.app-boot .sidebar {
+    opacity: 0;
+    transform: translate3d(-22px, 0, 0);
+    box-shadow: none;
+}
+
+body.app-boot .sidebar-top {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+}
+
+body.app-boot .nav-heading,
+body.app-boot .nav-item {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+}
+
+.nav-heading {
+    transition-duration: 320ms;
+}
+
+.nav-item {
+    transition-duration: 280ms;
+}
+
+.nav-item:nth-of-type(1) { transition-delay: 30ms; }
+.nav-item:nth-of-type(2) { transition-delay: 60ms; }
+.nav-item:nth-of-type(3) { transition-delay: 90ms; }
+.nav-item:nth-of-type(4) { transition-delay: 120ms; }
+
+.nav-item:hover {
+    color: var(--text-primary-light);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.active {
+    color: var(--text-primary-light);
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 500;
+}
+

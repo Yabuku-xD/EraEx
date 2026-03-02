@@ -1,0 +1,61 @@
+                <section id="view-home" class="app-view active home-empty" data-view-panel="home" aria-label="Home">
+                    <div class="home-top-actions" aria-label="Home actions">
+                        <button class="icon-btn" type="button" aria-label="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                        <img src="https://i.pravatar.cc/150?img=32" alt="Profile" class="user-avatar-img">
+                    </div>
+
+                    <section class="landing-home-intro" aria-label="EraEx intro">
+                        <div class="landing-home-eyebrow">EraEx</div>
+                        <h1 class="landing-home-title">
+                            Search by feeling.
+                            <span>Queue with intent.</span>
+                        </h1>
+                        <p class="landing-home-description">
+                            Describe a mood, an era, an artist influence, or a complex vibe. EraEx turns it into a playable queue and keeps it growing as you listen.
+                        </p>
+                        <div class="landing-home-pills" aria-hidden="true">
+                            <span class="landing-home-pill">Semantic Search</span>
+                            <span class="landing-home-pill">Adaptive Queue</span>
+                            <span class="landing-home-pill">Mood + Genre + Era</span>
+                        </div>
+                    </section>
+
+                    <section class="landing-query-card" aria-label="Home query composer">
+                        <div class="landing-query-header">
+                            <h2>What should play next?</h2>
+                            <p>Ask by mood, artist, vibe, or a complex feeling. We will queue results and start playback immediately.</p>
+                        </div>
+                        <form id="home-query-form" class="landing-query-form">
+                            <label for="home-query" class="sr-only">Home query</label>
+                            <textarea id="home-query" class="landing-query-input" rows="2" placeholder="Try: moody late night rnb like PARTYNEXTDOOR but uplifting"></textarea>
+                            <div class="landing-query-actions">
+                                <div class="landing-query-hints">
+                                    <button type="button" class="landing-chip" data-home-query="moody late night rnb like PARTYNEXTDOOR">Late-night R&B</button>
+                                    <button type="button" class="landing-chip" data-home-query="uplifting pop workout 2018">Workout Pop</button>
+                                    <button type="button" class="landing-chip" data-home-query="calm acoustic study non-instrumental">Calm Study</button>
+                                </div>
+                                <button id="home-query-submit" class="landing-submit-btn" type="submit">Search</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <div id="home-status" class="status-msg" aria-live="polite"></div>
+
+                    <section class="home-queue-block" aria-label="Home queue results">
+                        <div class="section-header">
+                            <div>
+                                <h2>Queue from Home</h2>
+                                <div id="home-queue-caption" class="section-subtext">Search from the landing box to build a continuous queue.</div>
+                            </div>
+                            <button id="home-queue-clear-btn" class="see-all-btn" type="button">Clear Queue</button>
+                        </div>
+                        <div id="home-queue-results" class="list-view"></div>
+                        <div id="home-queue-pager" class="search-pager hidden">
+                            <button id="home-queue-prev-btn" class="pager-btn" type="button">Prev</button>
+                            <span id="home-queue-page-label" class="search-page-label" aria-live="polite"></span>
+                            <button id="home-queue-next-btn" class="pager-btn" type="button">Next 15</button>
+                        </div>
+                    </section>
+                </section>

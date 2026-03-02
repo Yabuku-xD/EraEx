@@ -1,0 +1,64 @@
+    <section id="player" class="player floating-player" aria-label="Music player">
+        <div class="player-inner">
+            <!-- Left: Info -->
+            <div class="floating-info">
+                <div class="mini-cover-shell cover-bg-shell">
+                    <img id="player-art" class="mini-cover" alt="Current artwork" src="../static/cover-fallback.svg">
+                </div>
+                <div class="floating-meta">
+                    <div id="player-title" class="floating-title">EraEx</div>
+                    <div id="player-artist" class="floating-artist">System Audio</div>
+                </div>
+            </div>
+
+            <!-- Center: Controls & Wave Progress -->
+            <div class="floating-center">
+                <div class="player-controls">
+                    <button id="shuffle-btn" class="ctrl-btn" type="button" aria-label="Shuffle queue" data-tooltip="Shuffle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3h5v5M4 20l6-6M20 10l-4-4M4 4l5 5m0 0l7 7M21 21h-5v-5"/>
+                        </svg>
+                    </button>
+                    <button id="prev-btn" class="ctrl-btn" type="button" aria-label="Previous track" data-tooltip="Previous">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button id="play-btn" class="ctrl-btn play-pause-btn" type="button" aria-label="Play" data-tooltip="Play/Pause">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="play-icon"><path d="M8 5v14l11-7z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="pause-icon" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                    </button>
+                    <button id="next-btn" class="ctrl-btn" type="button" aria-label="Next track" data-tooltip="Next">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                    <button id="repeat-btn" class="ctrl-btn" type="button" aria-label="Repeat current track" data-tooltip="Repeat one">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 2l4 4-4 4M3 11V9a3 3 0 013-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 01-3 3H3"/>
+                        </svg>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="floating-actions">
+                <button id="player-playlist-btn" class="player-playlist-btn" type="button" data-tooltip="Add to Playlist" aria-label="Add current track to playlist">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h10M5 12h10M5 17h6M18 14v6M15 17h6"/></svg>
+                </button>
+                <div class="volume-pill" data-tooltip="Volume">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="vol-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0111 6.34v11.314a1 1 0 01-1.707.707L5.586 15z"/></svg>
+                    <input id="volume" class="vol-range-mini" type="range" min="0" max="100" step="1" value="100">
+                </div>
+            </div>
+            
+            <div id="hidden-yt"></div>
+            <p id="player-description" style="display:none;"></p>
+            <button id="like-btn" style="display:none;"></button>
+        </div>
+        
+        <!-- Timeline appears below player pill when active -->
+        <div class="progress-wrapper">
+            <input id="seek" class="wave-range" type="range" min="0" max="100" step="0.1" value="0">
+            <div class="time-display float-time">
+                <span id="time-current">0:00</span> / <span id="time-total">0:00</span>
+            </div>
+        </div>
+    </section>

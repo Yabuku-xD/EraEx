@@ -1,0 +1,386 @@
+/* 4. FLOATING PILL PLAYER */
+.floating-player {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateZ(0);
+    width: min(700px, calc(100vw - 48px));
+    height: 72px;
+    background: var(--bg-player);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-player);
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    will-change: transform;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    bottom: 14px;
+    transform: translateX(-50%) translateY(18px) translateZ(0);
+    transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.24s ease;
+}
+
+.player.active.floating-player {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    bottom: 32px;
+    transform: translateX(-50%) translateZ(0);
+}
+
+.player.has-track.floating-player {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    bottom: 32px;
+    transform: translateX(-50%) translateZ(0);
+}
+
+body[data-app-view="home"]:not(.home-track-ui-visible) .floating-player {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    bottom: 14px;
+    transform: translateX(-50%) translateY(18px) translateZ(0);
+}
+
+.floating-player.view-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    bottom: 14px !important;
+    transform: translateX(-50%) translateY(18px) translateZ(0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-view.active.view-enter {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    #view-home::after {
+        animation: none;
+    }
+
+    .landing-query-card,
+    .home-queue-block,
+    .floating-player,
+    .sidebar,
+    .sidebar-top,
+    .nav-heading,
+    .nav-item,
+    .top-header,
+    .header-middle-nav,
+    .right-panel {
+        transition: none !important;
+    }
+}
+
+#hidden-yt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.player-inner {
+    height: 100%;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.floating-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 200px;
+    /* Fixed width to center controls */
+}
+
+.mini-cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+    background: transparent;
+}
+
+.mini-cover.yt-cover-thumb {
+    transform: none;
+    object-fit: cover;
+    padding: 0;
+    clip-path: none;
+}
+
+.mini-cover.cover-is-fallback {
+    transform: none !important;
+    object-fit: contain;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.mini-cover-shell {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    flex: 0 0 48px;
+}
+
+.floating-meta {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.floating-title {
+    color: var(--text-primary-light);
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.floating-artist {
+    color: var(--text-secondary-light);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.floating-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 6px;
+    position: relative;
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary-light);
+    transition: transform 0.1s;
+}
+
+.ctrl-btn:active {
+    transform: scale(0.9);
+}
+
+.ctrl-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ctrl-btn.is-active {
+    color: rgba(216, 104, 49, 1);
+}
+
+.ctrl-btn.is-active svg {
+    filter: drop-shadow(0 0 6px rgba(216, 104, 49, 0.35));
+}
+
+.play-pause-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(216, 104, 49, 1);
+    border-radius: 50%;
+    color: #fff;
+    /* Source - https://stackoverflow.com/a/57693528
+       Posted by Awais
+       Retrieved 2026-02-21, License - CC BY-SA 4.0 */
+    position: relative;
+}
+
+.play-pause-btn svg {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    /* Applying user-submitted absolute centering */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 90%;
+    /* Source - https://stackoverflow.com/a/57693528
+       Posted by Awais
+       Retrieved 2026-02-21, License - CC BY-SA 4.0 */
+    position: absolute;
+    left: 50%;
+    top: 0px;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+
+    /* Secondary pill styling */
+    background: var(--bg-player);
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-player);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: -1;
+}
+
+.player.active .progress-wrapper,
+.player.has-track .progress-wrapper {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, calc(-100% - 12px));
+}
+
+/* Simulate Waveform Progress */
+.wave-range {
+    appearance: none;
+    flex: 1;
+    height: 16px;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+    --progress: 0%;
+    position: relative;
+}
+
+@media (max-width: 1100px) {
+    .right-panel {
+        display: none;
+    }
+
+    .top-header {
+        padding: 18px 20px;
+    }
+
+    .content-scroll {
+        padding: 0 20px 110px 20px;
+    }
+}
+
+.wave-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 12px;
+    /* Drawing vertical lines using repeating linear gradient to simulate waveform blocks */
+    background: repeating-linear-gradient(to right,
+            rgba(216, 104, 49, 1) 0px,
+            rgba(216, 104, 49, 1) 3px,
+            transparent 3px,
+            transparent 5px) no-repeat;
+    background-size: var(--progress) 100%;
+
+    /* Background grid for the unplayed track */
+    box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0);
+    /* Hack to lay over standard track */
+    position: relative;
+}
+
+.wave-range::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 12px;
+    z-index: -1;
+    background: repeating-linear-gradient(to right,
+            rgba(255, 255, 255, 0.2) 0px,
+            rgba(255, 255, 255, 0.2) 3px,
+            transparent 3px,
+            transparent 5px);
+}
+
+.wave-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 0;
+    height: 0;
+}
+
+.float-time {
+    color: var(--text-secondary-light);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: right;
+}
+
+.floating-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    width: 200px;
+}
+
+.floating-actions button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary-light);
+}
+
+.floating-actions button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.player-playlist-btn:hover {
+    color: var(--text-primary-light);
+}
+
+.volume-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary-light);
+}
+
+.volume-pill .vol-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.vol-range-mini {
+    appearance: none;
+    width: 60px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.vol-range-mini::-webkit-slider-thumb {
+    appearance: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+}

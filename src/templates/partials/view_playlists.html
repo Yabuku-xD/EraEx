@@ -1,0 +1,27 @@
+                <section id="view-playlists" class="app-view" data-view-panel="playlists" aria-label="Playlists">
+                    <section class="hero-banner hero-banner--compact">
+                        <div class="hero-content">
+                            <h1>Playlists</h1>
+                            <p>Save tracks into your own collections and replay them anytime.</p>
+                        </div>
+                    </section>
+                    <div id="playlists-status" class="status-msg" aria-live="polite"></div>
+                    <section class="result-block" aria-label="Playlist library">
+                        <div class="section-header">
+                            <div>
+                                <h2>My Playlists</h2>
+                                <div id="playlists-summary" class="section-subtext">Create a playlist and start adding songs from any list.</div>
+                            </div>
+                            <div class="playlist-header-actions">
+                                <button id="playlist-new-btn" class="see-all-btn playlist-action-btn" type="button">New Playlist</button>
+                                <button id="playlist-rename-btn" class="see-all-btn playlist-action-btn" type="button">Rename Selected</button>
+                                <button id="playlist-edit-cover-btn" class="see-all-btn playlist-action-btn" type="button">Edit Cover</button>
+                                <button id="playlist-clear-btn" class="see-all-btn playlist-action-btn" type="button">Clear Selected</button>
+                                <button id="playlist-delete-btn" class="see-all-btn playlist-action-btn playlist-action-btn--danger" type="button">Delete Selected</button>
+                            </div>
+                        </div>
+                        <div id="playlist-tabs" class="playlist-tab-list" role="tablist" aria-label="Playlists"></div>
+                        <input id="playlist-cover-input" type="file" accept="image/*" hidden>
+                        <div id="playlists-results" class="list-view"></div>
+                    </section>
+                </section>

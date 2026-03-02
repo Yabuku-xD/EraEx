@@ -1,0 +1,28 @@
+        <aside class="right-panel">
+            <div class="right-header">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="eq-icon"><path d="M4 9h2v6H4zm4-4h2v14H8zm4 6h2v4h-2zm4-4h2v8h-2z"/></svg>
+                <h3>Now Playing</h3>
+            </div>
+            
+            <div class="now-playing-large">
+                <div class="large-cover-wrapper cover-bg-shell">
+                    <img id="right-player-art" class="large-cover" alt="Current artwork" src="../static/cover-fallback.svg">
+                </div>
+                
+                <div class="now-playing-meta">
+                    <div class="meta-left">
+                        <h2 id="right-player-title" class="track-title-large">EraEx System</h2>
+                        <p id="right-player-artist" class="track-artist-large">No Track Selected</p>
+                    </div>
+                </div>
+                <!-- Synchronized Lyrics Panel embedded in Right Panel -->
+                <div id="lyrics-panel" class="lyrics-panel-inline">
+                    <div class="lyrics-scroll-container">
+                        <div id="lyrics-content" class="lyrics-content">
+                            <!-- Lyrics will be injected here -->
+                            <div class="lyric-line placeholder">Select a track to view lyrics...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>

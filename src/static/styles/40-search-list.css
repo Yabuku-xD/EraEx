@@ -1,0 +1,167 @@
+/* List View (Search Results / Recently Played) */
+.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px 8px 8px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    transform: translateZ(0);
+}
+
+.list-item:hover {
+    background-color: #f0f0f0;
+}
+
+.list-item.active {
+    background-color: #f0f0f0;
+    border-left: 3px solid var(--sc-orange);
+}
+
+.list-item-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.list-cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+    background: transparent;
+}
+
+.list-cover.yt-cover-thumb {
+    transform: none;
+    object-fit: cover;
+    padding: 0;
+    clip-path: none;
+}
+
+.list-cover.cover-is-fallback {
+    transform: none !important;
+    object-fit: contain;
+    padding: 6px;
+    border: 1px solid #e0e5ec;
+    background: linear-gradient(180deg, #f2f5f8, #e8edf2);
+}
+
+.list-cover-shell {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+    background: #eceff3;
+    flex: 0 0 48px;
+}
+
+.list-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.list-title {
+    font-weight: 600;
+    color: var(--text-primary-dark);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-artist,
+.list-time {
+    color: var(--text-secondary-dark);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary-dark);
+    flex: 0 0 auto;
+    margin-left: 16px;
+}
+
+.list-action-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: inherit;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.16s ease;
+}
+
+.list-action-btn:hover {
+    background: rgba(0, 0, 0, 0.045);
+    color: var(--text-primary-dark);
+    transform: translateY(-1px);
+}
+
+.list-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.list-like-btn {
+    line-height: 1;
+    font-weight: 300;
+}
+
+.list-like-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.list-like-btn.is-active {
+    color: var(--sc-orange) !important;
+    background: rgba(216, 104, 49, 0.08);
+}
+
+.list-dislike-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+.list-dislike-btn.is-active {
+    color: #bb3f3f !important;
+    background: rgba(187, 63, 63, 0.08);
+}
+
+.list-playlist-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+.list-item:hover .list-right {
+    color: var(--text-primary-dark);
+}

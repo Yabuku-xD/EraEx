@@ -1,0 +1,15 @@
+/*
+  EraEx frontend stylesheet manifest.
+  Styles are split by section for readability and maintainability.
+  Keep import order stable because later files override earlier ones.
+*/
+
+@import url("./styles/00-core.css");
+@import url("./styles/10-sidebar.css");
+@import url("./styles/20-main-views.css");
+@import url("./styles/30-foryou.css");
+@import url("./styles/40-search-list.css");
+@import url("./styles/50-right-panel.css");
+@import url("./styles/60-player.css");
+@import url("./styles/70-utilities.css");
+@import url("./styles/80-responsive.css");
