@@ -1,56 +1,74 @@
+<p align="center">
+  <img src="assets/banner.png" alt="EraEx" width="100%">
+</p>
+
 # EraEx
 
-EraEx is a software engineering project focused on building a production-style music platform: semantic retrieval, adaptive recommendations, resilient media integration, and a full-stack web experience.
+<p align="center">
+  <a href="metrics.md"><img src="https://img.shields.io/badge/Validation-Metrics%20Snapshot-6B7280?style=for-the-badge" alt="Validation metrics" /></a>
+  <a href="notebooks/full_pipeline.ipynb"><img src="https://img.shields.io/badge/Pipeline-Embeddings%20%2B%20FAISS-FFD700?style=for-the-badge" alt="Pipeline embeddings and FAISS" /></a>
+  <a href="src/recommendation/recommendation_engine.py"><img src="https://img.shields.io/badge/Feed-Adaptive%20%2B%20DPP-C73E1D?style=for-the-badge" alt="Adaptive DPP recommendations" /></a>
+  <a href="https://flask.palletsprojects.com/"><img src="https://img.shields.io/badge/Backend-Flask%20%2B%20SQLite-1D4E89?style=for-the-badge" alt="Backend Flask and SQLite" /></a>
+  <a href="https://www.sbert.net/"><img src="https://img.shields.io/badge/Search-BGE--M3%20%2B%20FAISS-2D6A4F?style=for-the-badge" alt="Search BGE-M3 and FAISS" /></a>
+  <a href="src/static/js/app.core.js"><img src="https://img.shields.io/badge/Frontend-HTML%20%2B%20CSS%20%2B%20JS-D86831?style=for-the-badge" alt="Frontend HTML CSS JS" /></a>
+</p>
 
-- **Service architecture:** modular Flask backend, separated search/recommendation/core services, and a componentized web UI.
-- **System reliability:** lazy loading, background warmup, multi-layer caching, and fallback paths for media/metadata providers.
-- **Data engineering:** FAISS index artifacts, metadata pipelines, and SQLite-backed user/account/profile persistence.
-- **Developer productivity:** dedicated CLIs for search debugging, recommendation analysis, maintenance, and offline hyperparameter tuning.
+Semantic music discovery app with hybrid search, adaptive recommendations, media fallback, and a multi-view Flask interface.
 
-## Architecture At A Glance
+EraEx combines dense semantic retrieval, intent-aware reranking, behavior-driven "For You" recommendations, SQLite-backed user profiles, and YouTube/Spotify enrichment in one local-first music product. The repo is built around five practical workflows: semantic discovery, explicit search, adaptive recommendations, playlist/history management, and offline maintenance or validation for the ranking stack.
 
-### Backend
+Current tracked stack snapshot: `Flask + BGE-M3 + FAISS + SQLite + yt-dlp`
 
-- `src/web_api/web_app.py`: API layer, routing, auth/session handling, playback and enrichment orchestration.
-- `src/search/search_pipeline.py`: semantic retrieval + reranking pipeline (`BAAI/bge-m3` + FAISS + intent-aware scoring).
-- `src/recommendation/recommendation_engine.py`: cold-start and adaptive recommendation engine.
-- `src/core/media_metadata.py`: YouTube/Spotify enrichment and fallback resolution.
-- `src/user_profiles/user_profile_store.py`: SQLite storage for likes, dislikes, plays, skips, playlists, and accounts.
+![EraEx homepage](assets/home.png)
 
-### Frontend
+## Table of Contents
 
-- Server-rendered templates under `src/templates/`.
-- Modular JS/CSS under `src/static/`.
-- Multi-view UX: Home, Search, For You, Liked, History, Playlists.
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Data and Indexes](#data-and-indexes)
+- [Repository Layout](#repository-layout)
+- [Validation](#validation)
+- [Contributing](#contributing)
 
-## Screenshots
+## Background
 
-### Home
-![EraEx Home](assets/home.png)
+EraEx exists to answer a product question that most music apps hide behind generic search: how do you make broad vibe prompts, precise artist lookups, and adaptive personal feeds feel coherent in one system?
 
-### Search
-![EraEx Search](assets/search.png)
+The stack currently includes:
 
-### For You
-![EraEx For You](assets/foryou.png)
+- Backend: Flask, SQLite, `python-dotenv`
+- Search and ranking: Sentence Transformers, `BAAI/bge-m3`, FAISS, NumPy, SciPy
+- Recommendation logic: adaptive similarity scoring, cold-start ranking, DPP-style diversity
+- Frontend: server-rendered HTML partials with modular CSS and JavaScript
+- Media and metadata: `yt-dlp`, YouTube fallback resolution, optional Spotify enrichment, lyrics provider integration
 
-### Liked
-![EraEx Liked](assets/liked.png)
+Core product capabilities:
 
-### History
-![EraEx History](assets/history.png)
-
-### Playlists
-![EraEx Playlists](assets/playlists.png)
-
-## Prerequisites
-
-- Python 3.10+ recommended.
-- `yt-dlp` available (the dependency is pinned in `requirements.txt`; binary fallback is also supported).
+- semantic and hybrid search across track metadata
+- adaptive "For You" recommendations from likes, plays, playlists, and skip behavior
+- cold-start trending and diverse fallback recommendations
+- playlist, liked, and history surfaces backed by SQLite
+- metadata enrichment for descriptions, covers, thumbnails, and lyrics
+- CLI and notebook workflows for pipeline rebuilds, tuning, and validation
 
 ## Install
 
-### Windows PowerShell
+### Dependencies
+
+For the default local setup, install:
+
+- Python 3.10+
+- `yt-dlp` available on `PATH`
+
+For notebook and analysis workflows, you may also want:
+
+- Jupyter or VS Code notebook support
+
+### Local Environment
+
+Windows PowerShell:
 
 ```powershell
 py -m venv .venv
@@ -59,7 +77,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Bash / WSL / Linux / macOS
+Git Bash, WSL, Linux, or macOS:
 
 ```bash
 python -m venv .venv
@@ -68,102 +86,122 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Required Runtime Data
+If PowerShell blocks activation:
 
-Search/recommendation runtime expects index artifacts under `data/indexes`:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
 
-- `faiss_index.bin` or `faiss.index`
-- `id_map.json` or `track_ids.pkl`
-- `metadata.json`
+## Usage
 
-Rebuild these artifacts using `notebooks/full_pipeline.ipynb`.
-
-## Run
+Run the app:
 
 ```bash
 python run.py
 ```
 
-Open `http://127.0.0.1:5000` (or `http://localhost:5000`).
+The startup flow warms the search pipeline, embedding model, and recommender before serving the web app.
 
-## Engineering Workflows (CLI)
+Once the app is running, the public product surface centers on these areas:
 
-### Search Debugging
+- `Home`: semantic discovery prompts and queue-first exploration
+- `Search`: explicit song, artist, and hybrid semantic lookup
+- `For You`: adaptive recommendations driven by profile behavior
+- `Liked`, `History`, and `Playlists`: personal library and replay surfaces
+
+Useful local workflow commands:
 
 ```bash
 python -m cli_tools.search_query_cli "midnight drive rnb trap" --limit 10
-python -m cli_tools.search_query_cli --artist "Miguel" --song "coffee"
-```
-
-### Recommendation Debugging
-
-```bash
-python -m cli_tools.foryou_recommendation_cli --user-id <USER_ID>
-python -m cli_tools.foryou_recommendation_cli --username <USERNAME> --password <PASSWORD> --fast
-```
-
-### Offline Search Tuning
-
-```bash
-python -m cli_tools.search_tuning_cli queries.json --trials 60 --report-json tuning_report.json
-python -m cli_tools.search_tuning_cli --template-out queries_template.json dummy.json
-```
-
-### Data / Maintenance Operations
-
-```bash
+python -m cli_tools.foryou_recommendation_cli --user-id <USER_ID> --fast
 python cli_tools/project_maintenance_cli.py enrich --only-missing --limit 1000
+python -m compileall src cli_tools config run.py
+```
+
+## Configuration
+
+Runtime configuration is centered in [`config/settings.py`](config/settings.py), with `.env` support loaded automatically when present.
+
+Key environment knobs include:
+
+- `EMBEDDING_MODEL` for the sentence-transformer model name
+- `FLASK_SECRET_KEY` and `SESSION_COOKIE_SECURE` for session behavior
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and `SPOTIFY_PLAYBACK_ENABLED`
+- `LYRICA_BASE_URL` for optional lyrics sidecar integration
+- search and recommendation tuning flags under the `SEARCH_*` and `RECO_*` families
+
+The app also expects generated ranking artifacts under `data/indexes/` for normal search and recommendation fidelity.
+
+## Data and Indexes
+
+EraEx depends on local generated artifacts that are intentionally larger than the tracked source tree.
+
+Important runtime assets:
+
+- `data/indexes/metadata.json`
+- `data/indexes/faiss_index.bin` or `data/indexes/faiss_index_ivf.bin`
+- `data/indexes/id_map.json` or `data/indexes/track_ids.pkl`
+- `data/cache/*` for recommendation and feature caches
+
+Useful rebuild and maintenance entrypoints:
+
+```bash
 python cli_tools/project_maintenance_cli.py audio-features
 python cli_tools/project_maintenance_cli.py simulate
 python cli_tools/project_maintenance_cli.py subset-test --subset-size 5
-python cli_tools/project_maintenance_cli.py clean --dry-run
 ```
 
-## API Surface (Core Routes)
+Notebook and build workflows:
 
-- `GET /search`
-- `GET /sonic`
-- `GET /api/recommend`
-- `GET /api/trending`
-- `GET /api/resolve_video`
-- `GET /api/track_enrich`
-- `GET /api/lyrics`
-- `POST /api/like`
-- `POST /api/unlike`
-- `POST /api/dislike`
-- `POST /api/undislike`
-- `POST /api/play`
-- `POST /api/skip`
-- `GET /api/liked`
-- `GET /api/history`
-- `GET /api/playlists` and mutation routes under `/api/playlists/*`
-- Auth routes under `/api/auth/*`
-- Spotify routes under `/api/spotify/*` plus `/spotify/callback`
+- [`notebooks/full_pipeline.ipynb`](notebooks/full_pipeline.ipynb) for end-to-end rebuilds
+- [`notebooks/reembed_reindex_colab.ipynb`](notebooks/reembed_reindex_colab.ipynb) for remote embedding/index work
 
-## Key Environment Variables
+Tracked evaluation support data currently lives in [`metrics.md`](metrics.md).
 
-- `EMBEDDING_MODEL` (default `BAAI/bge-m3`)
-- `FLASK_SECRET_KEY`
-- `SESSION_COOKIE_SECURE`
-- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`
-- `SPOTIFY_PLAYBACK_ENABLED`, `SPOTIFY_REDIRECT_URI`
-- `LYRICA_BASE_URL` (optional lyrics sidecar)
-- `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` (for notebook/model workflows requiring gated Hugging Face access)
-
-## Project Layout
+## Repository Layout
 
 ```text
 EraEx/
-  assets/                      # README screenshots
-  cli_tools/                   # search, recommendation, tuning, maintenance CLIs
-  config/settings.py           # global runtime settings
-  notebooks/                   # full pipeline and analysis notebooks
-  src/
-    core/                      # embeddings, media metadata, lazy loading, audio features
-    search/                    # semantic retrieval + ranking pipeline
-    recommendation/            # recommendation engine
-    user_profiles/             # SQLite-backed profile/account storage
-    web_api/                   # Flask app and routes
-    templates/ + static/       # frontend UI
-  run.py                       # startup + warmup entrypoint
+├── assets/                    # README visuals and screenshots
+├── cli_tools/                 # debugging, validation, tuning, and optimizer scripts
+├── config/                    # runtime settings and environment parsing
+├── data/                      # local indexes, caches, eval artifacts, SQLite profiles
+├── notebooks/                 # rebuild, reindex, and analysis workflows
+├── src/
+│   ├── core/                  # embeddings, media metadata, lyrics, lazy loading
+│   ├── pipeline/              # maintenance and CLI pipeline glue
+│   ├── recommendation/        # cold start and adaptive recommendation logic
+│   ├── search/                # semantic retrieval and hybrid reranking
+│   ├── static/                # frontend JS, CSS, and assets
+│   ├── templates/             # server-rendered HTML partials
+│   ├── user_profiles/         # SQLite-backed accounts and library state
+│   └── web_api/               # Flask app and route orchestration
+├── metrics.md                 # tracked evaluation summary
+├── requirements.txt           # Python dependencies
+└── run.py                     # startup warmup and app entrypoint
 ```
+
+## Validation
+
+Current tracked validation evidence includes:
+
+- [`metrics.md`](metrics.md) for search, recommendation, and bot-evaluation summaries
+- compile-time verification across the Python source tree
+
+Useful local verification commands:
+
+```bash
+python -m compileall src cli_tools config run.py
+```
+
+At the moment, the repo does not contain a populated `pytest` test suite, so validation is centered on compile checks, offline metrics, and CLI-driven evaluation.
+
+## Contributing
+
+Focused pull requests are welcome. When proposing a change:
+
+- keep the README aligned with the actual product surface
+- do not commit large local index artifacts or private environment files
+- include the verification steps you used for search, recommendation, or UI changes
+- prefer small, reviewable changes when touching ranking logic or maintenance workflows
