@@ -8,6 +8,7 @@
   <a href="metrics.md"><img src="https://img.shields.io/badge/Validation-Metrics%20Snapshot-6B7280?style=for-the-badge" alt="Validation metrics" /></a>
   <a href="notebooks/full_pipeline.ipynb"><img src="https://img.shields.io/badge/Pipeline-Embeddings%20%2B%20FAISS-FFD700?style=for-the-badge" alt="Pipeline embeddings and FAISS" /></a>
   <a href="src/recommendation/recommendation_engine.py"><img src="https://img.shields.io/badge/Feed-Adaptive%20%2B%20DPP-C73E1D?style=for-the-badge" alt="Adaptive DPP recommendations" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2D6A4F?style=for-the-badge" alt="License MIT" /></a>
   <a href="https://flask.palletsprojects.com/"><img src="https://img.shields.io/badge/Backend-Flask%20%2B%20SQLite-1D4E89?style=for-the-badge" alt="Backend Flask and SQLite" /></a>
   <a href="https://www.sbert.net/"><img src="https://img.shields.io/badge/Search-BGE--M3%20%2B%20FAISS-2D6A4F?style=for-the-badge" alt="Search BGE-M3 and FAISS" /></a>
   <a href="src/static/js/app.core.js"><img src="https://img.shields.io/badge/Frontend-HTML%20%2B%20CSS%20%2B%20JS-D86831?style=for-the-badge" alt="Frontend HTML CSS JS" /></a>
@@ -30,7 +31,9 @@ Current tracked stack snapshot: `Flask + BGE-M3 + FAISS + SQLite + yt-dlp`
 - [Data and Indexes](#data-and-indexes)
 - [Repository Layout](#repository-layout)
 - [Validation](#validation)
+- [Contributors](#contributors)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## Background
 
@@ -197,6 +200,13 @@ python -m compileall src cli_tools config run.py
 
 At the moment, the repo does not contain a populated `pytest` test suite, so validation is centered on compile checks, offline metrics, and CLI-driven evaluation.
 
+## Contributors
+
+This project also includes contributions from:
+
+- Ann Zachariah: Ex-EY engineer and Seattle University M.S. Computer Science student with Data Science specialization.
+- Atul Bhardwaj: Cloud Solutions lead at the SU AWS Cloud Club and Data & Operations Technician at Seattle University.
+
 ## Contributing
 
 Focused pull requests are welcome. When proposing a change:
@@ -205,3 +215,7 @@ Focused pull requests are welcome. When proposing a change:
 - do not commit large local index artifacts or private environment files
 - include the verification steps you used for search, recommendation, or UI changes
 - prefer small, reviewable changes when touching ranking logic or maintenance workflows
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
